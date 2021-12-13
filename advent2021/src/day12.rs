@@ -66,11 +66,13 @@ pub fn part1<R: std::io::BufRead>(reader: R) {
 fn explore_part2(path: Vec<&str>, curr_end: &str,
                  results:& mut Vec<Vec<String>>,
                  visited_twice: bool,
-                 graph: &std::collections::HashMap<&str, Vec<&str>>)  {
+                 graph: &std::collections::HashMap<&str, Vec<&str>>,
+                 num_paths: &mut u32)  {
     if curr_end == "end"  {
         let p: Vec<String> = path.iter().map(|p| p.to_string()).collect();
         // println!("found path: {:?} ", p );
-        results.push(p);
+        // results.push(p);
+        *num_paths += 1;
     } else  {
         let neighbours = match graph.get(curr_end) {
             Some(v) => v,
@@ -83,12 +85,12 @@ fn explore_part2(path: Vec<&str>, curr_end: &str,
             new_path.push(curr_end);
             if is_small_cave(n) {
                 if !path.contains(n) {
-                    explore_part2(new_path, n, results, visited_twice, graph);
+                    explore_part2(new_path, n, results, visited_twice, graph, num_paths);
                 } else if !visited_twice {
-                    explore_part2(new_path, n, results, true, graph);
+                    explore_part2(new_path, n, results, true, graph, num_paths);
                 }
             } else if n != &"start" {
-                explore_part2(new_path, n, results, visited_twice, graph);
+                explore_part2(new_path, n, results, visited_twice, graph, num_paths);
             }
         });
     }
@@ -122,9 +124,10 @@ pub fn part2<R: std::io::BufRead>(reader: R) {
 
     let mut results: Vec<Vec<String>> = Vec::new();
     let path: Vec<&str> = Vec::new();
-    explore_part2(path, "start", &mut results, false,  &graph);
+    let mut num_paths: u32 = 0;
+    explore_part2(path, "start", &mut results, false,  &graph, &mut num_paths);
 
-    println!("results size: {}", results.len());
+    println!("results size: {}", num_paths);
 }
 
 }
