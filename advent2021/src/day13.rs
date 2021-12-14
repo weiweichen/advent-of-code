@@ -139,14 +139,12 @@ pub fn part2<R: std::io::BufRead>(reader: R) {
         for y in 0..=max_y  {
             for x in 0..=max_x  {
             if paper.contains(&(x, y)) {
-                print!("###");
+                print!("##");
             } else  {
-                print!("...");
+                print!("..");
             }
         }
         println!("");
     }
 }
-
-
 }
