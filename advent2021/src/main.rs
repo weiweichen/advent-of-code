@@ -21,9 +21,10 @@ mod day16;
 mod day17;
 mod day18;
 mod day19;
+mod day20;
 
 fn main() {
-    let file = File::open("tests/day19.txt").expect("file wasn't found.");
+    let file = File::open("tests/day20.txt").expect("file wasn't found.");
     let mut reader = BufReader::new(file);
-    day19::day19::part2(&mut reader);
+    day20::day20::part2(&mut reader);
 }
