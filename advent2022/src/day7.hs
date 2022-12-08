@@ -81,7 +81,7 @@ update_kid_name item = do
     let new_kids = map(\kid -> name ++ kid) kids
     (name, (size, new_kids))
 
-part1 = do
+part1 input_list = do
     input_list <- fmap Text.lines (Text.readFile "../../data/day7.txt")
     let r0 = map(\line -> Split.splitOn " " (Text.unpack line)) input_list
     let r1 = (mygroup (length r0) 0 r0 [])
