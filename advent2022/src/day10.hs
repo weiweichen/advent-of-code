@@ -37,7 +37,6 @@ my_find v list = do
     let r0 = foldl(\acc item-> if (fst item) < v then item else acc) (0, 0) list
     snd r0
 
-
 draw_item :: Int -> (Int, Int)->String->(Int, Int)->String
 draw_item t item result next_item = do
     let (upper, _) = next_item
@@ -58,12 +57,10 @@ draw i n result t list = do
        draw (i + 1) n new_result (fst next_item) list
 
 part1 input = do
-    -- print input
     let result = map(\v -> (my_find v input) * v) [20, 60, 100, 140, 180, 220]
     print (sum result)
 
 part2 input = do
-    -- print input
     let r1 = take 240 (repeat ' ')
     let r2 = draw 0 (length input) r1 0 input
     let r3 = take 40 r2
