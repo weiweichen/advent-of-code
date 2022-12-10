@@ -18,7 +18,8 @@ parse item
 main = do
     input_list <- fmap Text.lines (Text.readFile "../../data/day10.txt")
     let r0 = map(\line -> Split.splitOn " " (Text.unpack line)) input_list
-    let input = map(\item -> parse item) r0
+    let r1 = map(\item -> parse item) r0
+    let input  = [(0, 1)] ++ (apply 0 (length r1) (0, 1) r1)
     part1 input
     part2 input
 
@@ -58,15 +59,13 @@ draw i n result t list = do
 
 part1 input = do
     -- print input
-    let r0 = [(0, 1)] ++ (apply 0 (length input) (0, 1) input)
-    let r1 = map(\v -> (my_find v r0) * v) [20, 60, 100, 140, 180, 220]
-    print (sum r1)
+    let result = map(\v -> (my_find v input) * v) [20, 60, 100, 140, 180, 220]
+    print (sum result)
 
 part2 input = do
     -- print input
-    let r0 = [(0, 1)] ++ (apply 0 (length input) (0, 1) input)
     let r1 = take 240 (repeat ' ')
-    let r2 = draw 0 (length r0) r1 0 r0
+    let r2 = draw 0 (length input) r1 0 input
     let r3 = take 40 r2
     let r4 = take 40 (drop 40 r2)
     let r5 = take 40 (drop 80 r2)
