@@ -95,8 +95,8 @@ play_part1 i steps patterns pi well w = do
         play_part1 (i + 1) steps patterns new_pi new_well w
 
 main = do
-    input_list <- fmap Text.lines (Text.readFile "../../data/day17_test.txt")
-    --part1 input_list
+    input_list <- fmap Text.lines (Text.readFile "../../data/day17.txt")
+    part1 input_list
     part2 input_list
 
 part1 input_list = do
@@ -108,52 +108,37 @@ part1 input_list = do
 
 
 find_v elem hmap = case Map.lookup elem hmap of
-    Nothing -> -1
+    Nothing -> (-1, 0)
     Just s -> s
 
 play_part2 i steps patterns pi well w hmap = do
-    if i == steps then (well, pi, hmap, i, steps, -1) else do
+    if i == steps then (well, pi, hmap, i, steps, -1, 0) else do
         let bi = i `mod` 5
         let ((bx, by), new_pi, (ix, iy)) = drop_brick bi well pi patterns w
-
-        let dx = (ix - bx)
-        let dy = (iy - by)
+        let cpi = new_pi `mod` (length patterns)
         let new_well = update_well well bx by bi
-        let v = find_v ((dx, dy), bi, pi) hmap
-        -- let v = -1
-        if v /= -1 then (well, pi, hmap, i, steps, v) else do
-            let new_map = Map.insert ((dx, dy), bi, pi) i hmap
+
+        let new_key = ((take 100 new_well), bi, cpi)
+        let (v, height) = find_v new_key hmap
+
+        if v /= -1 && i > 2000 then (new_well, pi, hmap, i, steps, v, height) else do
+            let new_map = Map.insert new_key (i, (length new_well)) hmap
             play_part2 (i + 1) steps patterns new_pi new_well w new_map
 
 
 part2 input_list = do
     let patterns = (head (map(\line -> (Text.unpack line)) input_list))
     let well = []
-    --display well
 
-    --let r1 = drop_brick 2 well 8 patterns 7
-    --print r1
+    let hmap :: Map ([String], Int, Int) (Int, Int) = Map.fromList[]
+    let (r_well, pi, new_map, next_v, steps, v, h) = play_part2 0 3000 patterns 0 well 7 hmap
 
-    --let ((x, y), p) = r1
-    --let r2 = update_well well x y 0
-    --display r2
+    let num_cycles = (1000000000000 - v) `div` (next_v - v)
+    let remain = (1000000000000 - v) `mod` (next_v - v)
+    let dh_per_cycle = (length r_well) - h
 
-    --let steps = 10
-    -- let (r3, r4) = play 0 steps patterns 0 well 7
-    --display r3
-    --print (length r3)
-    --print (last r3)
-    --print r4
+    let r_steps = v + remain
+    let (r5, r6) = play_part1 0 r_steps patterns 0 well 7
 
-    let steps = 500
-    let (r3, r4) = play_part1 0 steps patterns 0 well 7
-
-    let hmap :: Map ((Int, Int), Int, Int) Int = Map.fromList[]
-    -- let (r_well, pi, new_map, i, steps, v) = play_part2 0 2000 patterns 0 well 7 hmap
-    let (r_well, pi, new_map, i, steps, v) = play_part2 0 20000 patterns 0 r3 7 hmap
-    print pi
-    print i
-    print steps
-    print v
-    -- print new_map
+    print (h + dh_per_cycle * num_cycles + (length r5) - h)
 
