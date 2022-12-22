@@ -130,6 +130,24 @@ main = do
     part2 costs
 
 part1 costs = do
+    {-
+        Couldn’t get my code to finish 24 steps initially is because I read the problem wrong :fast-panic:.
+        You only have one robot factory so you can’t build arbitrary number of robots as long as resource is available, but only ONE robot a time!!!
+        It now runs with bunch of pruning heuristics
+        - never build more robots than highest resource robot building requirement for the resource the robot is collecting
+        - get rid of the robot build configurations if with the same resource, we can strictly build more robots already in earlier steps (hashmap + DFS)
+        - get rid of the robot build configurations if with the same robots, we have strictly more resources available in earlier steps (hashmap + DFS)
+        - get rid of the robot build configurations if we know that we won’t be able to build more geode robots given the amount of time left (one robot a time is still the key here)
+        - Still not super fast, but it gets the correct answer now:
+        
+        🍔 /usr/bin/time ./day19
+        978
+        15939
+               53.98 real        52.77 user         0.76 sys
+    -}
+
+
+
     let c0 = costs !! 0
     let max_robots = max_res_rob c0
 
