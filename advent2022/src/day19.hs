@@ -139,14 +139,12 @@ part1 costs = do
         - get rid of the robot build configurations if with the same robots, we have strictly more resources available in earlier steps (hashmap + DFS)
         - get rid of the robot build configurations if we know that we won’t be able to build more geode robots given the amount of time left (one robot a time is still the key here)
         - Still not super fast, but it gets the correct answer now:
-        
+
         🍔 /usr/bin/time ./day19
         978
         15939
-               53.98 real        52.77 user         0.76 sys
+               38.88 real        37.97 user         0.37 sys
     -}
-
-
 
     let c0 = costs !! 0
     let max_robots = max_res_rob c0
@@ -162,7 +160,7 @@ part1 costs = do
     let (res, robs, max_steps, curr_step)  = ((1, 0, 0, 0), [1, 0, 0, 0], 24, 1)
     let curr_max = get_elem 3 res
     let (m, cnt, s1, s2) = dfs_m c0 res robs curr_step curr_max max_steps 3 max_robots 0 (Map.fromList []) (Map.fromList [])
-    let r0 = map(\c -> dfs_m c res robs curr_step curr_max max_steps 3 max_robots 0 (Map.fromList []) (Map.fromList []) ) costs
+    let r0 = map(\c -> dfs_m c res robs curr_step curr_max max_steps 3 (max_res_rob c) 0 (Map.fromList []) (Map.fromList []) ) costs
     let r1 = zip (map(\p -> do
                                 let (c, _, _, _) = p
                                 c) r0) [1..]
@@ -177,7 +175,7 @@ part2 costs = do
     let (res, robs, max_steps, curr_step)  = ((1, 0, 0, 0), [1, 0, 0, 0], 32, 1)
     let curr_max = get_elem 3 res
 
-    let r0 = map(\c -> dfs_m c res robs curr_step curr_max max_steps 3 max_robots 0 (Map.fromList []) (Map.fromList []) ) (take 3 costs)
+    let r0 = map(\c -> dfs_m c res robs curr_step curr_max max_steps 3 (max_res_rob c) 0 (Map.fromList []) (Map.fromList []) ) (take 3 costs)
     let r1 = map(\p -> do
                                 let (c, _, _, _) = p
                                 c) r0
