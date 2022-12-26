@@ -1,0 +1,13 @@
+[N]     [Q]         [N]            
+[R]     [F] [Q]     [G] [M]        
+[J]     [Z] [T]     [R] [H] [J]    
+[T] [H] [G] [R]     [B] [N] [T]    
+[Z] [J] [J] [G] [F] [Z] [S] [M]    
+[B] [N] [N] [N] [Q] [W] [L] [Q] [S]
+[D] [S] [R] [V] [T] [C] [C] [N] [G]
+[F] [R] [C] [F] [L] [Q] [F] [D] [P]
+ 1   2   3   4   5   6   7   8   9 
+
+move 3 from 9 to 4
+move 2 from 5 to 2
+move 8 from 1 to 9
