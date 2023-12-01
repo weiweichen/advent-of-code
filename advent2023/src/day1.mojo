@@ -1,10 +1,4 @@
 from pathlib import Path
-from sys.info import os_is_windows
-from sys.param_env import env_get_string
-from testing import assert_equal
-
-from memory.buffer import Buffer, NDBuffer
-from tensor import Tensor
 
 def part1():
     let path = Path("../data/day1/part1_test.txt")
