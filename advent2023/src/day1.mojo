@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 def part1():
     let path = Path("../data/day1/part1_test.txt")
     let text = path.read_text()
@@ -21,6 +22,7 @@ def part1():
                 e = ord(c1) - 48
         result += b * 10 + e
     return result
+
 
 def part2():
     let path = Path("../data/day1/part2.txt")
