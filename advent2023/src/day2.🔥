@@ -1,0 +1,80 @@
+from pathlib import Path
+
+
+fn getIdx(str: String) -> Int:
+    if str == "red":
+        return 0
+    elif str == "green":
+        return 1
+    else:
+        return 2
+
+
+def part1():
+    let path = Path("../data/day2/part1.txt")
+    let text = path.read_text()
+    let games = text.split("\n")
+    let standard = StaticTuple[3, Int](12, 13, 14)
+
+    var result = 0
+    for g in range(len(games) - 1):
+        let turns = games[g].split(": ")[1].split("; ")
+        var good: Bool = True
+
+        for i in range(len(turns)):
+            let turn = turns[i].split(", ")
+            for k in range(len(turn)):
+                let pair = turn[k].split(" ")
+                let number = atol(pair[0])
+                let color = pair[1]
+                let color_idx = getIdx(color)
+                if number > standard[color_idx]:
+                    good = False
+                    break
+
+            if good == False:
+                break
+
+        if good:
+            result += g + 1
+
+    return result
+
+
+def part2():
+    let path = Path("../data/day2/part2.txt")
+    let text = path.read_text()
+    let games = text.split("\n")
+    let standard = StaticTuple[3, Int](12, 13, 14)
+
+    var result = 0
+    for g in range(len(games) - 1):
+        let turns = games[g].split(": ")[1].split("; ")
+
+        var bag = StaticTuple[3, Int](0, 0, 0)
+
+        for i in range(len(turns)):
+            let turn = turns[i].split(", ")
+            for k in range(len(turn)):
+                let pair = turn[k].split(" ")
+                let number = atol(pair[0])
+                let color = pair[1]
+                let color_idx = getIdx(color)
+                if number > bag[color_idx]:
+                    bag[color_idx] = number
+
+        let v = bag[0] * bag[1] * bag[2]
+        result += v
+
+    return result
+
+
+fn main():
+    try:
+        let answer1 = part1()
+        print(answer1)
+        let answer2 = part2()
+        print(answer2)
+
+    except e:
+        print(e)
