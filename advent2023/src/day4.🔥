@@ -1,0 +1,96 @@
+from pathlib import Path
+
+
+def part1():
+    let path = Path("../data/day4/part1.txt")
+    let text = path.read_text()
+    let lines = text.split("\n")
+
+    var result = 0
+    for l in range(len(lines) - 1):
+        let line = lines[l]
+        let c = line.split(": ")[1].split(" | ")
+        let winning_cards_str = c[0].split(" ")
+        let my_cards_str = c[1].split(" ")
+
+        var winning_cards = DynamicVector[Int8]()
+
+        var points = 0
+        for i in range(100):
+            winning_cards.push_back(0)
+
+        for i in range(len(winning_cards_str)):
+            try:
+                let card = atol(winning_cards_str[i])
+                winning_cards[card] = 1
+            except e:
+                pass
+
+        for i in range(len(my_cards_str)):
+            try:
+                let card = atol(my_cards_str[i])
+                if winning_cards[card] == 1:
+                    points = 1 if points == 0 else points * 2
+            except e:
+                pass
+
+        result += points
+
+    return result
+
+
+def part2():
+    let path = Path("../data/day4/part2.txt")
+    let text = path.read_text()
+    let lines = text.split("\n")
+
+    var num_cards = DynamicVector[Int]()
+    for i in range(len(lines) - 1):
+        num_cards.push_back(1)
+
+    var result = 0
+    for l in range(len(lines) - 1):
+        let line = lines[l]
+        let c = line.split(": ")[1].split(" | ")
+        let winning_cards_str = c[0].split(" ")
+        let my_cards_str = c[1].split(" ")
+
+        var winning_cards = DynamicVector[Int8]()
+
+        var points = 0
+        for i in range(100):
+            winning_cards.push_back(0)
+
+        for i in range(len(winning_cards_str)):
+            try:
+                let card = atol(winning_cards_str[i])
+                winning_cards[card] = 1
+            except e:
+                pass
+
+        for i in range(len(my_cards_str)):
+            try:
+                let card = atol(my_cards_str[i])
+                if winning_cards[card] == 1:
+                    points += 1
+            except e:
+                pass
+
+        for p in range(points):
+            if p + 1 + l < len(num_cards):
+                num_cards[p + 1 + l] += num_cards[l]
+
+        result += num_cards[l]
+
+    return result
+
+
+fn main():
+    try:
+        let answer1 = part1()
+        print(answer1)
+        let answer2 = part2()
+        print(answer2)
+
+    except e:
+        print(e)
