@@ -1,0 +1,37 @@
+from pathlib import Path
+
+
+fn get_count(time: Int64, distance: Int64) -> Int64:
+    var count = 0
+
+    for h in range(1, time):
+        if h * (time - h) > distance:
+            count += 1
+    return count
+
+def part1():
+    var result:Int64 = 1
+    let times = StaticTuple[4](47, 70, 75, 66)
+    let distances = StaticTuple[4](282, 1079, 1147, 1062)
+
+    for t in range(len(times)):
+        let time = times[t]
+        let distance = distances[t]
+        let count = get_count(time, distance)
+        result *= count
+    return result
+
+def part2():
+    let time = 47707566
+    let distance = 282107911471062
+    return get_count(time, distance)
+
+fn main():
+    try:
+        let answer1 = part1()
+        print(answer1)
+        let answer2 = part2()
+        print(answer2)
+
+    except e:
+        print(e)
