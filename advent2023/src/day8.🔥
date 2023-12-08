@@ -1,0 +1,119 @@
+from math import gcd, lcm
+from pathlib import Path
+from package.hashmap import HashMapKeyT, HashMap
+
+
+struct Direction(Copyable):
+    var left: String
+    var right: String
+
+    fn __init__(
+        inout self: Self, borrowed left: String, borrowed right: String
+    ):
+        self.left = left
+        self.right = right
+
+    fn __copyinit__(inout self, existing: Self):
+        self.left = existing.left
+        self.right = existing.right
+
+
+struct HashKey(HashMapKeyT):
+    var key: String
+
+    fn __init__(inout self: Self, borrowed key: String):
+        self.key = key
+
+    fn hash(borrowed self: Self) -> Int:
+        var result = 0
+        for i in range(len(self.key)):
+            result = result * 26 + ord(self.key[i]) - 65
+        return result
+
+    fn __eq__(self, rhs: Self) -> Bool:
+        return self.key == rhs.key
+
+    fn __copyinit__(inout self, existing: Self):
+        self.key = existing.key
+
+    fn __moveinit__(inout self, owned existing: Self):
+        self.key = existing.key
+
+
+def part1():
+    let path = Path("../data/day8/part1.txt")
+    let text = path.read_text()
+    let lines = text.split("\n")
+
+    let directions = lines[0]
+
+    var network = HashMap[HashKey, Direction](len(lines) * 10)
+
+    for i in range(2, len(lines) - 1):
+        let line = lines[i].split(" = ")
+        let key = line[0]
+        let d = line[1].split("(")[1].split(")")[0].split(", ")
+        let hashkey = HashKey(key)
+        let direction = Direction(d[0], d[1])
+        network.insert_or_update(hashkey, direction)
+
+    var curr: String = "AAA"
+    var step = 0
+    while curr != "ZZZ":
+        let d = directions[step % len(directions)]
+        let lr = network[curr]
+        curr = lr.right if d == "R" else lr.left
+        step += 1
+
+    return step
+
+
+def part2():
+    let path = Path("../data/day8/part2.txt")
+    let text = path.read_text()
+    let lines = text.split("\n")
+
+    let directions = lines[0]
+
+    var network = HashMap[HashKey, Direction](len(lines) * 10)
+    var points = DynamicVector[String]()
+
+    for i in range(2, len(lines) - 1):
+        let line = lines[i].split(" = ")
+        let key = line[0]
+        if key[len(key) - 1] == "A":
+            points.push_back(key)
+
+        let d = line[1].split("(")[1].split(")")[0].split(", ")
+        let hashkey = HashKey(key)
+        let direction = Direction(d[0], d[1])
+        network.insert_or_update(hashkey, direction)
+
+    var steps = DynamicVector[Int]()
+
+    for i in range(len(points)):
+        var step = 0
+        var curr = points[i]
+        while curr[len(curr) - 1] != "Z":
+            let d = directions[step % len(directions)]
+            let v = network[HashKey(curr)]
+            curr = v.right if d == "R" else v.left
+            step += 1
+        steps.push_back(step)
+
+    var result = steps[0]
+    for i in range(1, len(steps)):
+        result = lcm(result, steps[i])
+
+    return result
+
+
+fn main():
+    try:
+        let answer1 = part1()
+        print(answer1)
+        let answer2 = part2()
+        print(answer2)
+
+    except e:
+        print(e)
