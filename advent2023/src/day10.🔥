@@ -1,0 +1,317 @@
+from math import gcd, lcm, max
+from pathlib import Path
+from package.slowqueue import SlowQueue
+
+struct Point(CollectionElement, Stringable):
+    var x: Int
+    var y: Int
+    var value: Int
+
+    fn __init__(inout self: Self, x: Int, y: Int, value: Int):
+        self.x = x
+        self.y = y
+        self.value = value
+
+    fn __moveinit__(inout self, owned existing: Self):
+        self.x = existing.x
+        self.y = existing.y
+        self.value = existing.value
+
+    fn __copyinit__(inout self, existing: Self):
+        self.x = existing.x
+        self.y = existing.y
+        self.value = existing.value
+
+    fn __str__(self) -> String:
+        let res = String(
+            "y: "
+        ) + self.y + ", x: " + self.x + ", value: " + self.value
+        return res
+
+
+fn find_start(borrowed matrix: DynamicVector[String]) -> Point:
+    for y in range(len(matrix)):
+        for x in range(len(matrix[y])):
+            if matrix[y][x] == "S":
+                return Point(x, y, 0)
+    return Point(-1, -1, 0)
+
+
+fn set_value(
+    inout matrix_values: DynamicVector[DynamicVector[Int]],
+    borrowed point: Point,
+):
+    matrix_values[point.y][point.x] = point.value
+
+
+fn get_value(
+    borrowed matrix_values: DynamicVector[DynamicVector[Int]],
+    borrowed point: Point,
+) -> Int:
+    return matrix_values[point.y][point.x]
+
+
+fn get_next_points(
+    borrowed matrix: DynamicVector[String], borrowed point: Point
+) -> DynamicVector[Point]:
+    var res = DynamicVector[Point]()
+    let dir = matrix[point.y][point.x]
+    let height = len(matrix)
+    let width = len(matrix[0])
+
+    if dir == "|":
+        if point.y > 0:
+            res.push_back(Point(point.x, point.y - 1, 0))
+        if point.y < height - 1:
+            res.push_back(Point(point.x, point.y + 1, 0))
+        return res
+
+    if dir == "-":
+        if point.x > 0:
+            res.push_back(Point(point.x - 1, point.y, 0))
+        if point.x < width - 1:
+            res.push_back(Point(point.x + 1, point.y, 0))
+        return res
+
+    if dir == "L":
+        if point.y > 0:
+            res.push_back(Point(point.x, point.y - 1, 0))
+        if point.x < width - 1:
+            res.push_back(Point(point.x + 1, point.y, 0))
+        return res
+
+    if dir == "J":
+        if point.y > 0:
+            res.push_back(Point(point.x, point.y - 1, 0))
+        if point.x > 0:
+            res.push_back(Point(point.x - 1, point.y, 0))
+        return res
+
+    if dir == "7":
+        if point.y < height - 1:
+            res.push_back(Point(point.x, point.y + 1, 0))
+        if point.x > 0:
+            res.push_back(Point(point.x - 1, point.y, 0))
+        return res
+    if dir == "F":
+        if point.y < height - 1:
+            res.push_back(Point(point.x, point.y + 1, 0))
+        if point.x < width - 1:
+            res.push_back(Point(point.x + 1, point.y, 0))
+        return res
+
+    if dir == "S":
+        if point.y > 0:
+            let p = Point(point.x, point.y - 1, 0)
+            let dir = matrix[p.y][p.x]
+            if dir == "|" or dir == "7" or dir == "F":
+                res.push_back(p)
+        if point.y < height - 1:
+            let p = Point(point.x, point.y + 1, 0)
+            let dir = matrix[p.y][p.x]
+            if dir == "|" or dir == "L" or dir == "J":
+                res.push_back(p)
+
+        if point.x > 0:
+            let p = Point(point.x - 1, point.y, 0)
+            let dir = matrix[p.y][p.x]
+            if dir == "-" or dir == "L" or dir == "F":
+                res.push_back(p)
+        if point.x < width - 1:
+            let p = Point(point.x + 1, point.y, 0)
+            let dir = matrix[p.y][p.x]
+            if dir == "-" or dir == "7" or dir == "J":
+                res.push_back(p)
+
+    return res
+
+
+def part1():
+    let path = Path("../data/day10/part1.txt")
+    let text = path.read_text()
+    let matrix = text.split("\n")
+    let total_points: Int = len(matrix) * len(matrix[0])
+
+    let start = find_start(matrix)
+    var matrix_values = DynamicVector[DynamicVector[Int]]()
+    matrix_values.resize(len(matrix), DynamicVector[Int]())
+    for i in range(len(matrix_values)):
+        matrix_values[i].resize(len(matrix[0]), -1)
+
+    var worklist = SlowQueue[Point](total_points)
+    worklist.push_back(start)
+    var res = 0
+
+    while not worklist.empty():
+        let curr = worklist.front()
+        worklist.pop_front()
+        set_value(matrix_values, curr)
+        res = max(res, curr.value)
+
+        let next_points = get_next_points(matrix, curr)
+
+        for n in range(len(next_points)):
+            var next = next_points[n]
+            if get_value(matrix_values, next) != -1:
+                continue
+            next.value = curr.value + 1
+            worklist.push_back(next)
+
+    # for i in range(len(matrix_values)):
+    #     for j in range(len(matrix_values[i])):
+    #         print_no_newline(matrix_values[i][j])
+    #     print("")
+
+    return res
+
+
+fn get_next_dots(
+    borrowed matrix_values: DynamicVector[DynamicVector[Int]],
+    borrowed point: Point,
+) -> DynamicVector[Point]:
+    var res = DynamicVector[Point]()
+    if point.y > 0:
+        res.push_back(Point(point.x, point.y - 1, 0))
+    if point.y < len(matrix_values) - 1:
+        res.push_back(Point(point.x, point.y + 1, 0))
+    if point.x > 0:
+        res.push_back(Point(point.x - 1, point.y, 0))
+    if point.x < len(matrix_values[0]) - 1:
+        res.push_back(Point(point.x + 1, point.y, 0))
+    return res
+
+
+def part2():
+    let path = Path("../data/day10/part2.txt")
+    let text = path.read_text()
+    let lines = text.split("\n")
+
+    # stretch the matrix by 2 to create space for squeezed pipes
+    var matrix = DynamicVector[String]()
+    var m1 = DynamicVector[String]()
+    var m2 = DynamicVector[String]()
+    for i in range(len(lines) - 1):
+        var s0: String = ""
+        for j in range(len(lines[i])):
+            let curr = lines[i][j]
+            s0 += curr
+            if curr == "F" or curr == "L" or curr == "-":
+                s0 += "-"
+            elif curr == "S" and j < len(lines[i]) - 1:
+                let n = lines[i][j + 1]
+                if n == "-" or n == "7" or n == "J":
+                    s0 += "-"
+                else:
+                    s0 += "."
+            else:
+                s0 += "."
+        m1.push_back(s0)
+
+    for i in range(len(m1)):
+        var s0: String = ""
+        for j in range(len(m1[i])):
+            let curr = m1[i][j]
+            if curr == "|" or curr == "F" or curr == "7":
+                s0 += "|"
+            elif curr == "S" and i < len(m1) - 1:
+                let n = m1[i + 1][j]
+                if n == "|" or n == "J" or n == "L":
+                    s0 += "|"
+                else:
+                    s0 += "."
+            else:
+                s0 += "."
+        m2.push_back(s0)
+
+    for i in range(len(m1)):
+        matrix.push_back(m1[i])
+        matrix.push_back(m2[i])
+
+    # for i in range(len(matrix)):
+    #    for j in range(len(matrix[i])):
+    #        print_no_newline(matrix[i][j])
+    #    print("")
+
+    let total_points: Int = len(matrix) * len(matrix[0])
+    let start = find_start(matrix)
+    var matrix_values = DynamicVector[DynamicVector[Int]]()
+    matrix_values.resize(len(matrix), DynamicVector[Int]())
+    for i in range(len(matrix_values)):
+        matrix_values[i].resize(len(matrix[0]), -1)
+
+    var worklist = SlowQueue[Point](total_points)
+    worklist.push_back(start)
+    var res = 0
+
+    # number the pipe spaces
+    while not worklist.empty():
+        let curr = worklist.front()
+        worklist.pop_front()
+        set_value(matrix_values, curr)
+        let next_points = get_next_points(matrix, curr)
+
+        for n in range(len(next_points)):
+            var next = next_points[n]
+            if get_value(matrix_values, next) != -1:
+                continue
+            next.value = curr.value + 1
+            worklist.push_back(next)
+
+    # flood the matrix to find nested tiles
+    for i in range(len(matrix)):
+        let p0 = Point(0, i, 0)
+        if get_value(matrix_values, p0) == -1:
+            worklist.push_back(p0)
+
+        let p1 = Point(len(matrix[0]) - 1, i, 0)
+        if get_value(matrix_values, p1) == -1:
+            worklist.push_back(p1)
+
+    for i in range(1, len(matrix[0]) - 1):
+        let p0 = Point(i, 0, 0)
+        if get_value(matrix_values, p0) == -1:
+            worklist.push_back(p0)
+
+        let p1 = Point(i, len(matrix) - 1, 0)
+        if get_value(matrix_values, p1) == -1:
+            worklist.push_back(p1)
+
+    while not worklist.empty():
+        var curr = worklist.front()
+        worklist.pop_front()
+        if get_value(matrix_values, curr) != -1:
+            continue
+
+        curr.value = 0
+        set_value(matrix_values, curr)
+
+        let next_points = get_next_dots(matrix_values, curr)
+        for i in range(len(next_points)):
+            let next = next_points[i]
+            if get_value(matrix_values, next) != -1:
+                continue
+            worklist.push_back(next)
+
+    # count nested tiles (whose value is -1 and is not at stretched points)
+    for i in range(len(matrix_values)):
+        for j in range(len(matrix_values[i])):
+            if matrix_values[i][j] == -1:
+                # print_no_newline(".")
+                if i % 2 == 0 and j % 2 == 0:
+                    res += 1
+            # else:
+            #    print_no_newline("*")
+        # print("")
+
+    return res
+
+
+fn main():
+    try:
+        let answer1 = part1()
+        print(answer1)
+        let answer2 = part2()
+        print(answer2)
+
+    except e:
+        print(e)
