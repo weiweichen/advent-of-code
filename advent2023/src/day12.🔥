@@ -1,0 +1,230 @@
+from math import gcd, lcm, max
+from pathlib import Path
+from package.hashmap import HashMapKeyT, HashMap
+from package.slowqueue import SlowQueue
+
+
+struct State(HashMapKeyT):
+    var springs: String
+    var ss: Int
+    var records: DynamicVector[Int]
+    var rs: Int
+
+    fn __init__(
+        inout self: Self,
+        borrowed springs: String,
+        ss: Int,
+        borrowed records: DynamicVector[Int],
+        rs: Int,
+    ):
+        self.springs = springs
+        self.ss = ss
+        self.records = records
+        self.rs = rs
+
+    fn __moveinit__(inout self, owned existing: Self):
+        self.springs = existing.springs
+        self.ss = existing.ss
+        self.records = existing.records
+        self.rs = existing.rs
+
+    fn __copyinit__(inout self, existing: Self):
+        self.springs = existing.springs
+        self.ss = existing.ss
+        self.records = existing.records
+        self.rs = existing.rs
+
+    fn __eq__(self, rhs: Self) -> Bool:
+        var i = self.ss
+        var j = rhs.ss
+        while i < len(self.springs) and j < len(rhs.springs):
+            if self.springs[i] != rhs.springs[j]:
+                return False
+            i += 1
+            j += 1
+
+        if i < len(self.springs) or j < len(rhs.springs):
+            return False
+
+        i = self.rs
+        j = rhs.rs
+        while i < len(self.records) and j < len(rhs.records):
+            if self.records[i] != rhs.records[j]:
+                return False
+            i += 1
+            j += 1
+
+        if i < len(self.records) or j < len(rhs.records):
+            return False
+        return True
+
+    fn hash(borrowed self: Self) -> Int:
+        var result: Int = 0
+        for i in range(self.ss, len(self.springs)):
+            let s = self.springs[i]
+            let v = 0 if s == "." else 1 if s == "?" else 2
+            result = result * 3 + v
+        var acc: Int = 0
+        for i in range(self.rs, len(self.records)):
+            acc += self.records[i]
+        result += acc * (len(self.records) - self.rs)
+        return result
+
+
+fn solve(
+    inout springs: String,
+    ss: Int,
+    inout records: DynamicVector[Int],
+    rs: Int,
+    inout cache: HashMap[State, Int],
+) raises -> Int:
+    let key = State(springs, ss, records, rs)
+    if cache.contains(key):
+        return cache[key]
+    let result = solve_inner(springs, ss, records, rs, cache)
+    cache.insert_or_update(key, result)
+    return result
+
+
+fn solve_inner(
+    inout springs: String,
+    ss: Int,
+    inout records: DynamicVector[Int],
+    rs: Int,
+    inout cache: HashMap[State, Int],
+) raises -> Int:
+    if ss == len(springs) and rs == len(records):
+        return 1
+
+    if ss == len(springs):
+        return 0
+
+    if rs == len(records):
+        for i in range(ss, len(springs)):
+            if springs[i] == "#":
+                return 0
+        return 1
+
+    if springs[ss] == "?":
+        springs._buffer[ss] = ord("#")
+        let v1 = solve(springs, ss, records, rs, cache)
+        springs._buffer[ss] = ord(".")
+        let v2 = solve(springs, ss, records, rs, cache)
+        springs._buffer[ss] = ord("?")
+        return v1 + v2
+
+    if springs[ss] == ".":
+        return solve(springs, ss + 1, records, rs, cache)
+
+    # sprints[ss] == "#"
+    let curr_record = records[rs]
+    if curr_record == 1:
+        if springs[ss + 1] == "#":
+            return 0
+        let v = springs[ss + 1]
+        springs._buffer[ss + 1] = ord(".")
+        let result = solve(springs, ss + 1, records, rs + 1, cache)
+        springs._buffer[ss + 1] = ord(v)
+        return result
+    else:
+        if springs[ss + 1] == "#":
+            let r = records[rs]
+            records[rs] -= 1
+            let result = solve(springs, ss + 1, records, rs, cache)
+            records[rs] = r
+            return result
+        elif springs[ss + 1] == ".":
+            return 0
+        else:
+            let v = springs[ss + 1]
+            springs._buffer[ss + 1] = ord("#")
+            let r = records[rs]
+            records[rs] -= 1
+            let result = solve(springs, ss + 1, records, rs, cache)
+            springs._buffer[ss + 1] = ord(v)
+            records[rs] = r
+            return result
+
+
+def part1():
+    let path = Path("../data/day12/part1.txt")
+    let text = path.read_text()
+    let lines = text.split("\n")
+
+    var cache = HashMap[State, Int](1128889)
+
+    var result = 0
+    for i in range(len(lines) - 1):
+        let infos = lines[i].split(" ")
+        var springs = infos[0]
+        let strs = infos[1].split(",")
+        var records = DynamicVector[Int]()
+        for j in range(len(strs)):
+            records.push_back(atol(strs[j]))
+
+        # print(springs)
+        # for j in range(len(records)):
+        #     print_no_newline(records[j])
+        #     print_no_newline(" ")
+        # print(" ")
+
+        let res = solve(springs, 0, records, 0, cache)
+        result += res
+        # print(res)
+
+    return result
+
+
+def part2():
+    let path = Path("../data/day12/part2.txt")
+    let text = path.read_text()
+    let lines = text.split("\n")
+
+    var cache = HashMap[State, Int](3042161)
+    var result = 0
+
+    for i in range(len(lines) - 1):
+        let infos = lines[i].split(" ")
+        let init_springs = infos[0]
+        var springs = infos[0]
+        let strs = infos[1].split(",")
+        var init_records = DynamicVector[Int]()
+        var records = DynamicVector[Int]()
+        for j in range(len(strs)):
+            init_records.push_back(atol(strs[j]))
+            records.push_back(atol(strs[j]))
+
+        for i in range(4):
+            springs += "?" + init_springs
+            for j in range(len(init_records)):
+                records.push_back(init_records[j])
+
+        # print_no_newline(i)
+        # print_no_newline(" ")
+        # print(springs)
+
+        # for j in range(len(records)):
+        #     print_no_newline(records[j])
+        #     print_no_newline(" ")
+        # print(" ")
+
+        let res = solve(springs, 0, records, 0, cache)
+        result += res
+        # I have a super inefficient cache. Clean it up once in a while seems to help a lot for this problem.
+        if i % 100 == 0:
+            cache.clear()
+
+        #print(res)
+
+    return result
+
+
+fn main():
+    try:
+        let answer1 = part1()
+        print(answer1)
+        let answer2 = part2()
+        print(answer2)
+
+    except e:
+        print(e)

@@ -51,7 +51,6 @@ struct HashMap[K: HashMapKeyT, V: Copyable]:
 
     fn insert_or_update(inout self: Self, key: K, value: V) -> Bool:
         let hash = self._rehash(key.hash())
-
         for i in range(len(self.data[hash])):
             let pair = self.data[hash][i]
             if pair.key == key:
@@ -83,3 +82,13 @@ struct HashMap[K: HashMapKeyT, V: Copyable]:
 
     fn __len__(self) -> Int:
         return self.size
+
+    fn clear(inout self: Self):
+        # this is super inefficient btw
+        self.data = DynamicVector[
+            DynamicVector[_HashMapDataElementType[K, V]]
+        ]()
+        self.data.resize(
+            self.capacity, DynamicVector[_HashMapDataElementType[K, V]]()
+        )
+        self.size = 0
