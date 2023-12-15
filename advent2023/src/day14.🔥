@@ -1,0 +1,212 @@
+from math import gcd, lcm, max
+from pathlib import Path
+from package.hashmap import HashMapKeyT, HashMap
+from package.slowqueue import SlowQueue
+
+
+struct Key(HashMapKeyT):
+    var dish: String
+    var dir: Int
+
+    fn __init__(inout self: Self, dish: DynamicVector[String], dir: Int):
+        self.dish = String("")
+        for i in range(len(dish)):
+            self.dish += dish[i]
+        self.dir = dir
+
+    fn __moveinit__(inout self, owned existing: Self):
+        self.dish = existing.dish ^
+        self.dir = existing.dir
+
+    fn __copyinit__(inout self, existing: Self):
+        self.dish = existing.dish
+        self.dir = existing.dir
+
+    fn __eq__(self, rhs: Self) -> Bool:
+        return self.dish == rhs.dish and self.dir == rhs.dir
+
+    fn hash(borrowed self: Self) -> Int:
+        let p: Int = 31
+        let m: Int = 10000009
+
+        var hash_value: Int = 0
+        var p_pow: Int = 1
+        for i in range(len(self.dish)):
+            let v = 0 if self.dish[i] == "." else 1 if self.dish[
+                i
+            ] == "O" else 2
+            hash_value = (hash_value + int(v * p_pow)) % m
+            p_pow = (p_pow * p) % m
+
+        hash_value = (hash_value + self.dir * p_pow) % m
+        return hash_value
+
+
+def part1():
+    let path = Path("../data/day14/part1.txt")
+    let text = path.read_text()
+    let dish = text.split("\n")
+
+    let height = len(dish) - 1
+    var result = 0
+    for col in range(len(dish[0])):
+        var gap = 0
+        var acc = 0
+        for row in range(len(dish) - 1):
+            let pebbel = dish[row][col]
+            if pebbel == "#":
+                gap = 0
+            elif pebbel == ".":
+                gap += 1
+            else:
+                let v = height - (row - gap)
+                # print(String("pebbel[") + row + ", " + col + "]: " + v)
+                acc += v
+        # print(acc)
+        result += acc
+    return result
+
+
+fn print_dish(borrowed dish: DynamicVector[String]):
+    for i in range(len(dish)):
+        print(dish[i])
+
+
+fn solve(
+    inout dish: DynamicVector[String],
+    count: Int,
+    inout map: HashMap[Key, Int],
+    no_cache: Bool,
+) raises -> (Int, Bool):
+    let key = Key(dish, 0)
+    if map.contains(key) and not no_cache:
+        return map[key], True
+
+    let height = len(dish) - 1
+    let width = len(dish[0])
+    var result = 0
+
+    # north
+    for col in range(len(dish[0])):
+        var gap = 0
+        for row in range(len(dish) - 1):
+            let pebbel = dish[row][col]
+            if pebbel == "#":
+                gap = 0
+            elif pebbel == ".":
+                gap += 1
+            else:
+                let dest = row - gap
+                let v = height - dest
+                dish[dest]._buffer[col] = ord(pebbel)
+                if dest != row:
+                    dish[row]._buffer[col] = ord(".")
+                # print(String("pebbel[") + row + ", " + col + "]: gap " + gap + " value: " + v)
+        # print(acc)
+
+    # west
+    for row in range(len(dish) - 1):
+        var gap = 0
+        for col in range(len(dish[0])):
+            let pebbel = dish[row][col]
+            if pebbel == "#":
+                gap = 0
+            elif pebbel == ".":
+                gap += 1
+            else:
+                let dest = col - gap
+                let v = height - row
+                dish[row]._buffer[dest] = ord(pebbel)
+                if dest != col:
+                    dish[row]._buffer[col] = ord(".")
+                # print(String("pebbel[") + row + ", " + col + "]: " + v)
+        # print(acc)
+
+    # south
+    for col in range(len(dish[0])):
+        var gap = 0
+        var acc = 0
+        for row in range(len(dish) - 2, -1, -1):
+            let pebbel = dish[row][col]
+            if pebbel == "#":
+                gap = 0
+            elif pebbel == ".":
+                gap += 1
+            else:
+                let dest = row + gap
+                let v = height - dest
+                dish[dest]._buffer[col] = ord(pebbel)
+                if dest != row:
+                    dish[row]._buffer[col] = ord(".")
+                # print(String("pebbel[") + row + ", " + col + "]: " + v)
+                acc += v
+        # print(acc)
+
+    for row in range(len(dish) - 1):
+        var gap = 0
+        var acc = 0
+        for col in range(len(dish[0]) - 1, -1, -1):
+            let pebbel = dish[row][col]
+            if pebbel == "#":
+                gap = 0
+            elif pebbel == ".":
+                gap += 1
+            else:
+                let dest = col + gap
+                let v = height - row
+                dish[row]._buffer[dest] = ord(pebbel)
+                if dest != col:
+                    dish[row]._buffer[col] = ord(".")
+                # print(String("pebbel[") + row + ", " + col + "]: " + v)
+                acc += v
+        # print(acc)
+        result += acc
+
+    # print(String("dir: ") + dir + " result: " + result)
+    # print_dish(dish)
+    if not no_cache:
+        _ = map.insert_or_update(key, count)
+    return result, False
+
+
+def part2():
+    let path = Path("../data/day14/part2.txt")
+    let text = path.read_text()
+    let lines = text.split("\n")
+    var dish = lines
+
+    var cache = HashMap[Key, Int](3042161)
+
+    var i: Int = 0
+    let total = 1000000000
+
+    while i < total:
+        var res = solve(dish, i, cache, False)
+
+        if res.get[1, Bool]():
+            # print_dish(dish)
+            # print(String("cycle found i: ") + i + " res: " + res.get[0, Int]())
+            let init = res.get[0, Int]()
+            let cycle = i - init
+            let run_again = total - ((total - init) // cycle * cycle + init)
+            # print(run_again)
+            for j in range(run_again):
+                res = solve(dish, i, cache, True)
+
+            # print(String("result: ") + res.get[0, Int]())
+            return res.get[0, Int]()
+
+        i += 1
+
+    return -1
+
+
+fn main():
+    try:
+        let answer1 = part1()
+        print(answer1)
+        let answer2 = part2()
+        print(answer2)
+
+    except e:
+        print(e)
