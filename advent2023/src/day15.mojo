@@ -67,6 +67,10 @@ fn action(
                     boxes[hash][j] = boxes[hash][j + 1]
                 _ = boxes[hash].pop_back()
                 if len(boxes[hash]) == 0:
+                    # This shouldn't be needed but
+                    # DynamicVector[DynamicVector[T]] has
+                    # a bug right now and it crashes later
+                    # with push_back if I don't reinitialzed here.
                     boxes[hash] = DynamicVector[Box]()
             else:
                 boxes[hash][i].value = step.value
