@@ -1,0 +1,277 @@
+from math import gcd, lcm, max
+from pathlib import Path
+from package.hashmap import HashMapKeyT, HashMap
+from package.slowqueue import SlowQueue
+
+
+struct Position(CollectionElement, Stringable, HashMapKeyT):
+    var row: Int
+    var col: Int
+    var dir: StaticIntTuple[2]
+
+    fn __init__(inout self: Self, row: Int, col: Int, dir: StaticIntTuple[2]):
+        self.row = row
+        self.col = col
+        self.dir = dir
+
+    fn __moveinit__(inout self: Self, owned existing: Self):
+        self.row = existing.row
+        self.col = existing.col
+        self.dir = existing.dir
+
+    fn __copyinit__(inout self: Self, existing: Self):
+        self.row = existing.row
+        self.col = existing.col
+        self.dir = existing.dir
+
+    fn is_out(self: Self, height: Int, width: Int) -> Bool:
+        return (
+            self.row < 0
+            or self.row >= height
+            or self.col < 0
+            or self.col >= width
+        )
+
+    fn dir_string(self: Self) -> String:
+        if self.dir[0] == 0 and self.dir[1] == 1:
+            return "right"
+        if self.dir[0] == 0 and self.dir[1] == -1:
+            return "left"
+        if self.dir[0] == 1 and self.dir[1] == 0:
+            return "down"
+        if self.dir[0] == -1 and self.dir[1] == 0:
+            return "up"
+        return "none"
+
+    fn __str__(self: Self) -> String:
+        return (
+            String("[") + self.row + ", " + self.col + "]: " + self.dir_string()
+        )
+
+    fn __eq__(self: Self, rhs: Self) -> Bool:
+        return (
+            self.row == rhs.row and self.col == rhs.col and self.dir == rhs.dir
+        )
+
+    fn hash(self: Self) -> Int:
+        let p: Int = 31
+        let m: Int = 10000009
+
+        var hash_value: Int = 0
+        var p_pow: Int = 1
+        var v = DynamicVector[Int]()
+        v.push_back(self.row)
+        v.push_back(self.col)
+        v.push_back(self.dir[0])
+        v.push_back(self.dir[1])
+
+        for i in range(len(v)):
+            hash_value = (hash_value + int(v[i] * p_pow)) % m
+            p_pow = (p_pow * p) % m
+
+        return hash_value
+
+
+fn get_dir(dir: String) -> StaticIntTuple[2]:
+    if dir == "right":
+        return StaticIntTuple[2](0, 1)
+    if dir == "left":
+        return StaticIntTuple[2](0, -1)
+    if dir == "up":
+        return StaticIntTuple[2](-1, 0)
+    if dir == "down":
+        return StaticIntTuple[2](1, 0)
+    if dir == "-":
+        return get_dir("right")
+    if dir == "|":
+        return get_dir("down")
+    if dir == "\\":
+        return get_dir("down")
+    if dir == "/":
+        return get_dir("up")
+
+    return StaticIntTuple[2](0, 0)
+
+
+fn get_next_position(
+    next: Position, symbol: String, dir: String
+) -> DynamicVector[Position]:
+    var result = DynamicVector[Position]()
+
+    if symbol == ".":
+        result.push_back(next)
+    elif symbol == "\\":
+        var next_dir = StaticIntTuple[2](0, 0)
+        if dir == "right":
+            next_dir = get_dir("down")
+        elif dir == "left":
+            next_dir = get_dir("up")
+        elif dir == "down":
+            next_dir = get_dir("right")
+        elif dir == "up":
+            next_dir = get_dir("left")
+        result.push_back(Position(next.row, next.col, next_dir))
+    elif symbol == "/":
+        var next_dir = StaticIntTuple[2](0, 0)
+        if dir == "right":
+            next_dir = get_dir("up")
+        elif dir == "left":
+            next_dir = get_dir("down")
+        elif dir == "down":
+            next_dir = get_dir("left")
+        elif dir == "up":
+            next_dir = get_dir("right")
+        result.push_back(Position(next.row, next.col, next_dir))
+
+    elif symbol == "|":
+        if dir == "up" or dir == "down":
+            result.push_back(next)
+        else:
+            # p = Position(next.row, next.col, get_dir("up"))
+            result.push_back(Position(next.row, next.col, get_dir("up")))
+            result.push_back(Position(next.row, next.col, get_dir("down")))
+
+    elif symbol == "-":
+        if dir == "right" or dir == "left":
+            result.push_back(next)
+        else:
+            # p = Position(next.row, next.col, get_dir("left"))
+            result.push_back(Position(next.row, next.col, get_dir("left")))
+            result.push_back(Position(next.row, next.col, get_dir("right")))
+
+    return result
+
+
+fn run_beam(
+    borrowed start: Position,
+    borrowed contraption: DynamicVector[String],
+    inout work_list: SlowQueue[Position],
+    inout hot_map: DynamicVector[DynamicVector[Int]],
+):
+    var p = start
+    let height = len(contraption) - 1
+    let width = len(contraption[0])
+
+    # for i in range(len(contraption) - 1):
+    #     print(contraption[i])
+
+    while not p.is_out(height, width):
+        # print(String("curr: ") + p.__str__())
+
+        hot_map[p.row][p.col] = 1
+        let next = Position(p.row + p.dir[0], p.col + p.dir[1], p.dir)
+        # print(String("next: ") + next.__str__())
+
+        if next.is_out(height, width):
+            break
+
+        let symbol = contraption[next.row][next.col]
+        # print(symbol)
+
+        let next_positions = get_next_position(next, symbol, p.dir_string())
+        if next_positions.size == 1:
+            p = next_positions[0]
+        else:
+            for i in range(0, len(next_positions)):
+                work_list.push_back(next_positions[i])
+            break
+    else:
+        # print(String("next_p: ") + p.__str__() + "\n")
+        pass
+
+
+fn print_hotmap(hot_map: DynamicVector[DynamicVector[Int]]):
+    for i in range(len(hot_map)):
+        var str = String("")
+        for j in range(len(hot_map[0])):
+            if hot_map[i][j] == 0:
+                str += "."
+            else:
+                str += "#"
+        print(str)
+
+
+fn solve(
+    borrowed contraption: DynamicVector[String], start: Position
+) raises -> Int:
+    var work_list = SlowQueue[Position](10000)
+    var hot_map = DynamicVector[DynamicVector[Int]]()
+    var init_val = DynamicVector[Int]()
+    init_val.resize(len(contraption[0]), 0)
+    hot_map.resize(len(contraption) - 1, init_val)
+
+    work_list.push_back(start)
+
+    var count = 0
+    var cache = HashMap[Position, Int](3042161)
+    while work_list.size > 0:
+        let p = work_list.front()
+        work_list.pop_front()
+        if cache.contains(p):
+            continue
+        # print(p)
+        run_beam(p, contraption, work_list, hot_map)
+        count += 1
+        _ = cache.insert_or_update(p, 0)
+
+    # print(count)
+    # print_hotmap(hot_map)
+
+    var result: Int = 0
+    for i in range(len(hot_map)):
+        for j in range(len(hot_map[0])):
+            if hot_map[i][j] == 1:
+                result += 1
+
+    return result
+
+
+def part1():
+    let path = Path("../data/day16/part1.txt")
+    let text = path.read_text()
+    let contraption = text.split("\n")
+    let start = Position(0, 0, get_dir(contraption[0][0]))
+    let result = solve(contraption, start)
+    return result
+
+
+def part2():
+    let path = Path("../data/day16/part2.txt")
+    let text = path.read_text()
+    let lines = text.split("\n")
+
+    let contraption = text.split("\n")
+
+    let height = len(contraption) - 1
+    let width = len(contraption[0])
+
+    var result = 0
+
+    for i in range(width):
+        result = max(
+            result, solve(contraption, Position(0, i, get_dir("down")))
+        )
+        result = max(
+            result, solve(contraption, Position(height - 1, i, get_dir("up")))
+        )
+
+    for i in range(height):
+        result = max(
+            result, solve(contraption, Position(i, 0, get_dir("right")))
+        )
+        result = max(
+            result, solve(contraption, Position(i, width - 1, get_dir("left")))
+        )
+
+    return result
+
+
+fn main():
+    try:
+        let answer1 = part1()
+        print(answer1)
+        let answer2 = part2()
+        print(answer2)
+
+    except e:
+        print(e)
