@@ -1,18 +1,6 @@
-trait Hashable:
-    fn hash(borrowed self: Self) -> Int:
-        pass
+from package.traits import HashKeyT
 
-
-trait Equitable:
-    fn __eq__(self, rhs: Self) -> Bool:
-        pass
-
-
-trait HashMapKeyT(Hashable, Equitable, CollectionElement):
-    pass
-
-
-struct _HashMapDataElementType[K: HashMapKeyT, V: Copyable](CollectionElement):
+struct _HashMapDataElementType[K: HashKeyT, V: Copyable](CollectionElement):
     var key: K
     var value: V
 
@@ -29,7 +17,7 @@ struct _HashMapDataElementType[K: HashMapKeyT, V: Copyable](CollectionElement):
         self.value = existing.value
 
 
-struct HashMap[K: HashMapKeyT, V: Copyable]:
+struct HashMap[K: HashKeyT, V: Copyable]:
     var data: DynamicVector[DynamicVector[_HashMapDataElementType[K, V]]]
     var capacity: Int
     var size: Int

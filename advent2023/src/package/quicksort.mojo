@@ -1,7 +1,4 @@
-trait Sortable(CollectionElement):
-    fn __lt__(self, rhs: Self) -> Bool:
-        pass
-
+from package.traits import Sortable
 
 fn _swap[
     type: CollectionElement
