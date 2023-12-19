@@ -1,0 +1,268 @@
+from math import gcd, lcm, max, min
+from pathlib import Path
+from package.hashmap import HashMap
+from package.slowqueue import SlowQueue
+from package.traits import HashKeyT
+
+
+struct Position(CollectionElement, Stringable, HashKeyT):
+    var row: Int
+    var col: Int
+
+    fn __init__(inout self: Self, row: Int, col: Int):
+        self.row = row
+        self.col = col
+
+    fn __moveinit__(inout self: Self, owned existing: Self):
+        self.row = existing.row
+        self.col = existing.col
+
+    fn __copyinit__(inout self: Self, existing: Self):
+        self.row = existing.row
+        self.col = existing.col
+
+    fn __str__(self: Self) -> String:
+        return String("[") + self.row + ", " + self.col + "]: "
+
+    fn __eq__(self: Self, rhs: Self) -> Bool:
+        return self.row == rhs.row and self.col == rhs.col
+
+    fn __add__(self: Self, rhs: Self) -> Position:
+        return Position(self.row + rhs.row, self.col + rhs.col)
+
+    fn __add__(self: Self, rhs: StaticIntTuple[2]) -> Position:
+        return Position(self.row + rhs[0], self.col + rhs[1])
+
+    fn is_out(borrowed self: Self, height: Int, width: Int) -> Bool:
+        return (
+            self.row < 0
+            or self.row >= height
+            or self.col < 0
+            or self.col >= width
+        )
+
+    fn neighbours(borrowed self: Self) -> DynamicVector[Position]:
+        var result = DynamicVector[Position]()
+        let dirs = StaticTuple[4, StaticIntTuple[2]](
+            (1, 0), (-1, 0), (0, 1), (0, -1)
+        )
+        for i in range(len(dirs)):
+            result.push_back(self + dirs[i])
+        return result
+
+    fn hash(self: Self) -> Int:
+        let p: Int = 31
+        let m: Int = 10000009
+
+        var hash_value: Int = 0
+        var p_pow: Int = 1
+        var v = DynamicVector[Int]()
+        v.push_back(self.row)
+        v.push_back(self.col)
+
+        for i in range(len(v)):
+            hash_value = (hash_value + int(v[i] * p_pow)) % m
+            p_pow = (p_pow * p) % m
+
+        return hash_value
+
+
+struct Instruction(CollectionElement, Stringable):
+    var dir: String
+    var steps: Int
+    var offsets: StaticIntTuple[2]
+
+    fn __init__(inout self: Self, dir: String, steps: Int):
+        self.dir = dir
+        self.steps = steps
+        if dir == "R":
+            self.offsets = StaticIntTuple[2](0, 1)
+        elif dir == "L":
+            self.offsets = StaticIntTuple[2](0, -1)
+        elif dir == "D":
+            self.offsets = StaticIntTuple[2](1, 0)
+        else:
+            self.offsets = StaticIntTuple[2](-1, 0)
+
+    fn __moveinit__(inout self: Self, owned existing: Self):
+        self.dir = existing.dir ^
+        self.steps = existing.steps
+        self.offsets = existing.offsets ^
+
+    fn __copyinit__(inout self: Self, existing: Self):
+        self.dir = existing.dir
+        self.steps = existing.steps
+        self.offsets = existing.offsets
+
+    fn __str__(self: Self) -> String:
+        return String("") + self.dir + ", steps: " + self.steps
+
+
+fn print_grid_int(borrowed grid: DynamicVector[DynamicVector[Int]]):
+    for i in range(len(grid)):
+        var str = String("")
+        for j in range(len(grid[0])):
+            if grid[i][j] == 0:
+                str += "."
+            elif grid[i][j] == 1:
+                str += "*"
+            elif grid[i][j] == 2:
+                str += "#"
+        print(str)
+
+
+def part1():
+    let path = Path("../data/day18/part1.txt")
+    let text = path.read_text()
+    let lines = text.split("\n")
+
+    var curr = Position(0, 0)
+    var min_x: Int = 0
+    var max_x: Int = 0
+    var min_y: Int = 0
+    var max_y: Int = 0
+    var instructions = DynamicVector[Instruction]()
+
+    for i in range(len(lines) - 1):
+        let tmp = lines[i].split(" ")
+        let steps = atol(tmp[1])
+        let inst = Instruction(tmp[0], steps)
+        instructions.push_back(inst)
+        if inst.dir == "R":
+            curr.col += inst.steps
+        elif inst.dir == "D":
+            curr.row += inst.steps
+        elif inst.dir == "L":
+            curr.col -= inst.steps
+        elif inst.dir == "U":
+            curr.row -= inst.steps
+
+        min_x = min(min_x, curr.col)
+        max_x = max(max_x, curr.col)
+        min_y = min(min_y, curr.row)
+        max_y = max(max_y, curr.row)
+
+    # print(
+    #     String("min_x: ")
+    #     + min_x
+    #     + " max_x: "
+    #     + max_x
+    #     + " min_y: "
+    #     + min_y
+    #     + " max_y: "
+    #     + max_y
+    # )
+    let height = max_y - min_y + 1
+    let width = max_x - min_x + 1
+    # print(String("width: ") + width + " height: " + height)
+
+    var grid = DynamicVector[DynamicVector[Int]]()
+    var init_grid = DynamicVector[Int]()
+    init_grid.resize(width, 0)
+    grid.resize(height, init_grid)
+    curr = Position(0 - min_y, 0 - min_x)
+
+    for i in range(len(instructions)):
+        let inst = instructions[i]
+        for j in range(inst.steps):
+            grid[curr.row][curr.col] = 2
+            curr = curr + inst.offsets
+
+    # print_grid_int(grid)
+
+    var work_list = SlowQueue[Position](1000000)
+    for i in range(width):
+        if grid[0][i] == 0:
+            work_list.push_back(Position(0, i))
+        if grid[height - 1][i] == 0:
+            work_list.push_back(Position(height - 1, i))
+    for i in range(height):
+        if grid[i][0] == 0:
+            work_list.push_back(Position(i, 0))
+        if grid[i][width - 1] == 0:
+            work_list.push_back(Position(i, width - 1))
+
+    while work_list.size > 0:
+        let curr = work_list.front()
+        work_list.pop_front()
+        if grid[curr.row][curr.col] != 0:
+            continue
+        grid[curr.row][curr.col] = 1
+
+        let neigbours = curr.neighbours()
+        for i in range(len(neigbours)):
+            let next = neigbours[i]
+            if not next.is_out(height, width) and grid[next.row][next.col] == 0:
+                work_list.push_back(next)
+
+    # print("")
+    # print_grid_int(grid)
+    var result: Int = 0
+    for i in range(height):
+        for j in range(width):
+            if grid[i][j] == 0 or grid[i][j] == 2:
+                result += 1
+    return result
+
+
+fn to_int(hex: String, str_len: Int) -> Int:
+    var result = 0
+    for i in range(0, str_len, 1):
+        let ch = hex[i]
+        let v = ord(ch) - 48 if isdigit(ord(ch)) else ord(ch) - 87
+        result = result * 16 + v
+    return result
+
+
+def part2():
+    let path = Path("../data/day18/part2.txt")
+    let text = path.read_text()
+    let lines = text.split("\n")
+
+    var curr = Position(0, 0)
+    var points = DynamicVector[Position]()
+    points.push_back(curr)
+    var edge_points: Int = 0
+
+    for i in range(len(lines) - 1):
+        let tmp = lines[i].split(" ")[2].split("#")[1]
+        let steps = to_int(tmp, 5)
+        let dir = "R" if tmp[5] == "0" else (
+            "D" if tmp[5] == "1" else ("L" if tmp[5] == "2" else "U")
+        )
+        edge_points += steps
+
+        if dir == "R":
+            curr.col += steps
+        elif dir == "D":
+            curr.row += steps
+        elif dir == "L":
+            curr.col -= steps
+        elif dir == "U":
+            curr.row -= steps
+        points.push_back(curr)
+
+    # print(edge_points)
+
+    # shoelace formula:
+    # https://en.wikipedia.org/wiki/Shoelace_formula
+    var result = 0
+    for i in range(len(points)):
+        let j = (i + 1) % len(points)
+        let v = (points[i].col) * (points[j].row) - (points[i].row) * (
+            points[j].col
+        )
+        result += v
+
+    return result // 2 + (edge_points) // 2 + 1
+
+
+fn main():
+    try:
+        let answer1 = part1()
+        print(answer1)
+        let answer2 = part2()
+        print(answer2)
+
+    except e:
+        print(e)
