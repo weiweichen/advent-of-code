@@ -64,9 +64,20 @@ struct HashMap[K: HashKeyT, V: Copyable]:
         for i in range(len(self.data[hash])):
             let pair = self.data[hash][i]
             if pair.key == key:
-                return pair.value
+                return self.data[hash][i].value
 
         raise Error("map doesn't have the key")
+
+    fn find(inout self: Self, key: K) raises -> _HashMapDataElementType[K, V]:
+        let hash = self._rehash(key.hash())
+
+        for i in range(len(self.data[hash])):
+            let pair = self.data[hash][i]
+            if pair.key == key:
+                return __get_address_as_lvalue((self.data[hash].data + i).value)
+
+        raise Error("map doesn't have the key")
+
 
     fn __len__(self) -> Int:
         return self.size

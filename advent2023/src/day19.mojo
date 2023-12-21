@@ -347,6 +347,10 @@ def part2():
     return result
 
 fn main():
+    let data: Int8 = 0
+    let x = rebind[Int32](data)
+    print(x)
+    
     try:
         let answer1 = part1()
         print(answer1)

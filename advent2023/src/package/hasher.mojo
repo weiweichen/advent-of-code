@@ -26,3 +26,16 @@ struct StringHasher(HashKeyT):
             p_pow = (p_pow * p) % m
 
         return hash_value
+
+@value
+struct IntHasher(HashKeyT):
+    var data: Int
+
+    fn __init__(inout self: Self, borrowed data: Int):
+        self.data = data
+
+    fn __eq__(self, rhs: Self) -> Bool:
+        return self.data == rhs.data
+
+    fn hash(borrowed self: Self) -> Int:
+        return self.data
