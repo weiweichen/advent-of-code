@@ -1,0 +1,447 @@
+from math import gcd, lcm, max, min
+from pathlib import Path
+from package.hasher import IntHasher, StringHasher
+from package.hashmap import HashMap
+from package.slowqueue import SlowQueue
+from package.traits import HashKeyT
+
+
+@value
+struct Stats(Stringable):
+    var pulse: String
+    var times: Int
+
+    fn __init__(inout self: Self, pulse: String, times: Int):
+        self.pulse = pulse
+        self.times = times
+
+    fn __str__(borrowed self: Self) -> String:
+        return self.pulse + ": " + self.times + " times "
+
+
+fn to_string(borrowed vec: DynamicVector[Bool]) -> String:
+    var result: String = "["
+    for i in range(len(vec)):
+        result += vec[i]
+        result += ","
+    result += "]"
+    return result
+
+
+fn to_string(borrowed queue: SlowQueue[Bool]) -> String:
+    var result: String = "["
+    for i in range(queue.head, queue.tail):
+        result += queue.data[i]
+        result += ", "
+    result += "]"
+    return result
+
+
+fn to_string(borrowed queue: SlowQueue[Int]) -> String:
+    var result: String = "["
+    for i in range(queue.head, queue.tail):
+        result += queue.data[i]
+        result += ", "
+    result += "]"
+    return result
+
+
+@value
+struct Device(CollectionElement, HashKeyT, Stringable):
+    var name: String
+    var type: Int
+    var next: DynamicVector[String]
+    var prev: DynamicVector[String]
+    var next_id: DynamicVector[Int]
+    var prev_id: DynamicVector[Int]
+    var inputs: DynamicVector[SlowQueue[Bool]]
+    var ff_inputs: DynamicVector[Bool]
+    var state: Bool
+    var id: Int
+    var ff_input: SlowQueue[Bool]
+
+    fn __init__(
+        inout self: Self,
+        borrowed name: String,
+        borrowed next: DynamicVector[String],
+        id: Int,
+    ) raises:
+        self.name = ""
+        self.type = -1
+        self.next = next
+        self.prev = DynamicVector[String]()
+        self.inputs = DynamicVector[SlowQueue[Bool]]()
+        self.ff_inputs = DynamicVector[Bool]()
+        self.state = False
+        self.next_id = DynamicVector[Int]()
+        self.prev_id = DynamicVector[Int]()
+        self.id = id
+        self.ff_input = SlowQueue[Bool](100)
+
+        if name == "broadcaster":
+            self.name = name
+            self.type = 0
+        elif name[0] == "%":
+            self.name = name[1:]
+            self.type = 1
+        elif name[0] == "&":
+            self.name = name[1:]
+            self.type = 2
+        else:
+            self.name = name
+            self.type = 3
+
+    fn __copyinit__(inout self: Self, borrowed existing: Self):
+        self.name = existing.name
+        self.type = existing.type
+        self.next = existing.next
+        self.prev = existing.prev
+        self.next_id = existing.next_id
+        self.prev_id = existing.prev_id
+        self.inputs = existing.inputs
+        self.state = existing.state
+        self.id = existing.id
+        self.ff_input = existing.ff_input
+        self.ff_inputs = existing.ff_inputs
+
+    fn init_inputs(inout self: Self, size: Int):
+        let q = SlowQueue[Bool](1000)
+        self.inputs.resize(size, q)
+        self.ff_inputs.resize(size, False)
+
+    fn hash(borrowed self: Self) -> Int:
+        return StringHasher(self.name).hash()
+
+    fn __eq__(self, rhs: Self) -> Bool:
+        return self.name == rhs.name and self.type == rhs.type
+
+    fn __str__(borrowed self: Self) -> String:
+        var result = String("")
+        if self.type == 0:
+            result += "broadcaster"
+        elif self.type == 1:
+            result += "%" + self.name
+        elif self.type == 2:
+            result += "&" + self.name
+        else:
+            result += self.name
+
+        result += " next: ["
+        for i in range(len(self.next)):
+            result += self.next[i] + ":" + self.next_id[i] + " "
+        result += "], prev: ["
+        for i in range(len(self.prev)):
+            result += self.prev[i] + ":" + self.prev_id[i] + " "
+        result += "], "
+
+        if self.type == 1 or self.type == 0:
+            result += "input: "
+            result += to_string(self.ff_input)
+            result += " state: "
+
+        elif self.type == 2:
+            # result += "inputs:["
+            # for i in range(len(self.inputs)):
+            #    result += to_string(self.inputs[i])
+            # result += "], state: "
+            result += "inputs:"
+            result += to_string(self.ff_inputs)
+            result += ", state: "
+
+        if self.type == 1:
+            if self.state:
+                result += "on"
+            else:
+                result += "off"
+        return result
+
+    fn set_next(
+        inout self: Self,
+        inout devices: DynamicVector[Device],
+        inout work_list: SlowQueue[Int],
+    ) raises -> Stats:
+        if self.type == 0:
+            # broadcaster
+            let next_signal = self.ff_input.front()
+            self.ff_input.pop_front()
+
+            for i in range(len(self.next_id)):
+                let id = self.next_id[i]
+                if devices[id].type == 2:
+                    # devices[id].inputs[self.id].push_back(next_signal)
+                    devices[id].ff_inputs[self.id] = next_signal
+                else:
+                    devices[id].ff_input.push_back(next_signal)
+                work_list.push_back(id)
+
+            # print(self.name + " sends: " + next_signal)
+
+            if next_signal:
+                return Stats("High", len(self.next))
+            else:
+                return Stats("Low", len(self.next))
+
+        elif self.type == 1:
+            let input_signal = self.ff_input.front()
+            self.ff_input.pop_front()
+            # flip-flop
+            if input_signal:
+                # high pulse
+                # print(self.name + " sends: nothing")
+                return Stats("Nothing", 0)
+
+            else:
+                var next_signal: Bool = False
+                if self.state:
+                    # flip-flop is on
+                    self.state = False
+                    next_signal = False
+                else:
+                    # flip-flop is off
+                    self.state = True
+                    next_signal = True
+
+                # print(self.name + " sends: " + next_signal)
+
+                for i in range(len(self.next_id)):
+                    let id = self.next_id[i]
+                    # print(String("next: ") + id + " " + next_signal)
+                    if devices[id].type == 2:
+                        # devices[id].inputs[self.id].push_back(next_signal)
+                        devices[id].ff_inputs[self.id] = next_signal
+                    else:
+                        devices[id].ff_input.push_back(next_signal)
+
+                    work_list.push_back(id)
+
+                if next_signal:
+                    return Stats("High", len(self.next))
+                else:
+                    return Stats("Low", len(self.next))
+
+        elif self.type == 2:
+            # conjunction
+            var next_signal: Bool = False
+
+            for i in range(len(self.prev_id)):
+                if not self.ff_inputs[self.prev_id[i]]:
+                    next_signal = True
+                    break
+                # if self.inputs[self.prev_id[i]].size == 0:
+                #    next_signal = True
+                #    break
+
+                # else:
+                #    let front_signal = self.inputs[self.prev_id[i]].front()
+                #    self.inputs[self.prev_id[i]].pop_front()
+                #    if not front_signal:
+                #        next_signal = True
+                #        break
+
+            for i in range(len(self.next_id)):
+                let id = self.next_id[i]
+                if devices[id].type == 2:
+                    # devices[self.next_id[i]].inputs[self.id].push_back(next_signal)
+                    devices[id].ff_inputs[self.id] = next_signal
+                else:
+                    devices[self.next_id[i]].ff_input.push_back(next_signal)
+                work_list.push_back(id)
+
+            # print(self.name + " sends: " + next_signal)
+            if next_signal:
+                return Stats("High", len(self.next))
+            else:
+                return Stats("Low", len(self.next))
+
+        return Stats("Nothing", 0)
+
+
+fn print_devices(borrowed devices: DynamicVector[Device]):
+    for i in range(len(devices)):
+        let d = devices[i]
+        print(d)
+
+
+fn run_part1(
+    inout devices: DynamicVector[Device], init_signal: Bool, bcastId: Int
+) raises -> StaticIntTuple[2]:
+    var work_list = SlowQueue[Int](10000)
+    devices[bcastId].ff_input.push_back(init_signal)
+
+    work_list.push_back(bcastId)
+    var low: Int = 0
+    var high: Int = 0
+    while work_list.size > 0:
+        let curr = work_list.front()
+        work_list.pop_front()
+        let stats = devices[curr].set_next(devices, work_list)
+        if stats.pulse == "High":
+            high += stats.times
+        elif stats.pulse == "Low":
+            low += stats.times
+        # print(stats)
+        # print_devices(devices)
+        # print("")
+    return (high, low + 1)
+
+
+fn run_part2(
+    inout devices: DynamicVector[Device],
+    init_signal: Bool,
+    bcastId: Int,
+    inout cycles: HashMap[IntHasher, Int],
+    borrowed cycle_ids: DynamicVector[Int],
+    driver: Int,
+    borrowed counts: Int,
+) raises:
+    var work_list = SlowQueue[Int](10000)
+    devices[bcastId].ff_input.push_back(init_signal)
+
+    work_list.push_back(bcastId)
+
+    while work_list.size > 0:
+        let curr = work_list.front()
+        work_list.pop_front()
+        let stats = devices[curr].set_next(devices, work_list)
+        if curr == driver:
+            let driver_device = devices[curr]
+            for i in range(len(driver_device.prev_id)):
+                let p = driver_device.prev_id[i]
+                if driver_device.ff_inputs[p]:
+                    _ = cycles.insert_or_update(p, counts)
+
+        # print(stats)
+        # print_devices(devices)
+        # print("")
+
+
+def part1():
+    let path = Path("../data/day20/part1.txt")
+    let text = path.read_text()
+    let lines = text.split("\n")
+
+    var name_map = HashMap[StringHasher, Int](3042161)
+    var devices = DynamicVector[Device]()
+    var bcastId: Int = 0
+
+    for i in range(len(lines) - 1):
+        let s0 = lines[i].split(" -> ")
+        let next = s0[1].split(", ")
+        let d = Device(s0[0], next, i)
+        _ = name_map.insert_or_update(d.name, i)
+        devices.push_back(d)
+        if d.name == "broadcaster":
+            bcastId = i
+
+    for i in range(len(devices)):
+        let d = devices[i]
+
+        for j in range(len(d.next)):
+            if not name_map.contains(d.next[j]):
+                let new = Device(
+                    d.next[j], DynamicVector[String](), len(devices)
+                )
+                name_map.insert_or_update(new.name, len(devices))
+                devices.push_back(new)
+
+            devices[name_map[d.next[j]]].prev.push_back(d.name)
+            devices[name_map[d.next[j]]].prev_id.push_back(name_map[d.name])
+
+        for j in range(len(d.next)):
+            devices[i].next_id.push_back(name_map[d.next[j]])
+
+    for i in range(len(devices)):
+        devices[i].init_inputs(len(devices))
+
+    # print_devices(devices)
+    var high: Int = 0
+    var low: Int = 0
+    for i in range(1000):
+        let res = run_part1(devices, False, bcastId)
+        high += res[0]
+        low += res[1]
+        # print(String("high: ") + high + " low: " + low)
+    # print(String("Low: ") + low)
+    # print(String("High:") + high)
+
+    return low * high
+
+
+def part2():
+    let path = Path("../data/day20/part2.txt")
+    let text = path.read_text()
+    let lines = text.split("\n")
+
+    var name_map = HashMap[StringHasher, Int](3042161)
+    var devices = DynamicVector[Device]()
+    var bcastId: Int = 0
+    var cycles = HashMap[IntHasher, Int](10003)
+    var cycle_ids = DynamicVector[Int]()
+
+    for i in range(len(lines) - 1):
+        let s0 = lines[i].split(" -> ")
+        let next = s0[1].split(", ")
+        let d = Device(s0[0], next, i)
+        _ = name_map.insert_or_update(d.name, i)
+        devices.push_back(d)
+        if d.name == "broadcaster":
+            bcastId = i
+
+    for i in range(len(devices)):
+        let d = devices[i]
+
+        for j in range(len(d.next)):
+            if not name_map.contains(d.next[j]):
+                let new = Device(
+                    d.next[j], DynamicVector[String](), len(devices)
+                )
+                name_map.insert_or_update(new.name, len(devices))
+                devices.push_back(new)
+
+            devices[name_map[d.next[j]]].prev.push_back(d.name)
+            devices[name_map[d.next[j]]].prev_id.push_back(name_map[d.name])
+
+        for j in range(len(d.next)):
+            devices[i].next_id.push_back(name_map[d.next[j]])
+
+    for i in range(len(devices)):
+        devices[i].init_inputs(len(devices))
+
+    let driver_id = devices[name_map[String("rx")]].prev_id[0]
+    let driver = devices[driver_id]
+    for i in range(len(driver.prev_id)):
+        let p = driver.prev_id[i]
+        cycles.insert_or_update(p, 0)
+        cycle_ids.push_back(p)
+
+    # print_devices(devices)
+
+    var count: Int = 0
+    while True:
+        var stop: Bool = True
+        for i in range(len(cycle_ids)):
+            if cycles[cycle_ids[i]] == 0:
+                stop = False
+        if stop:
+            break
+
+        count += 1
+        run_part2(devices, False, bcastId, cycles, cycle_ids, driver_id, count)
+
+    var result: Int = 1
+    for i in range(len(cycle_ids)):
+        # print(cycles[cycle_ids[i]])
+        result *= cycles[cycle_ids[i]]
+
+    return result
+
+
+fn main():
+    try:
+        let answer1 = part1()
+        print(answer1)
+        let answer2 = part2()
+        print(answer2)
+
+    except e:
+        print(e)
