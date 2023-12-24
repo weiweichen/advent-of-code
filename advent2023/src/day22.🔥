@@ -1,0 +1,403 @@
+from math import gcd, lcm, max, min
+from pathlib import Path
+from package.hasher import IntHasher, StringHasher
+from package.hashmap import HashMap
+from package.hashset import HashSet
+from package.quicksort import quicksort
+from package.slowqueue import SlowQueue
+from package.traits import Equitable, HashKeyT, Sortable
+
+
+@value
+struct Point(Stringable, CollectionElement):
+    var x: Int
+    var y: Int
+    var z: Int
+
+    fn __init__(inout self: Self, x: Int, y: Int, z: Int):
+        self.x = x
+        self.y = y
+        self.z = z
+
+    fn __init__(inout self: Self, vec: DynamicVector[String]) raises:
+        self.x = atol(vec[0])
+        self.y = atol(vec[1])
+        self.z = atol(vec[2])
+
+    fn __str__(self: Self) -> String:
+        return String("[") + self.x + ", " + self.y + ", " + self.z + "]"
+
+    fn __eq__(self: Self, rhs: Self) -> Bool:
+        return self.x == rhs.x and self.y == rhs.y and self.z == rhs.z
+
+    fn hash(self: Self) -> Int:
+        let p: Int = 31
+        let m: Int = 10000009
+
+        var hash_value: Int = 0
+        var p_pow: Int = 1
+        var v = DynamicVector[Int]()
+        v.push_back(self.x)
+        v.push_back(self.y)
+        v.push_back(self.z)
+        for i in range(len(v)):
+            hash_value = (hash_value + int(v[i] * p_pow)) % m
+            p_pow = (p_pow * p) % m
+
+        return hash_value
+
+
+struct Brick(CollectionElement, Stringable, Sortable):
+    var start: Point
+    var end: Point
+    var supporters: DynamicVector[Int]
+    var id: Int
+    var curr_level: Int
+
+    fn __init__(inout self: Self, start: Point, end: Point, id: Int):
+        if start.z > end.z:
+            self.start = end
+            self.end = start
+        else:
+            self.start = start
+            self.end = end
+
+        self.supporters = DynamicVector[Int]()
+        self.id = id
+        self.curr_level = self.end.z
+
+    fn __moveinit__(inout self: Self, owned existing: Self):
+        self.start = existing.start
+        self.end = existing.end
+        self.id = existing.id
+        self.curr_level = existing.curr_level
+        self.supporters = existing.supporters ^
+
+    fn __copyinit__(inout self: Self, existing: Self):
+        self.start = existing.start
+        self.end = existing.end
+        self.id = existing.id
+        self.curr_level = existing.curr_level
+        self.supporters = existing.supporters
+
+    fn __str__(self: Self) -> String:
+        var result = String()
+        result += String("id: ") + self.id + " "
+        result += self.start
+        result += "->"
+        result += self.end + String(" supporters: [")
+        for i in range(len(self.supporters)):
+            result += self.supporters[i]
+            if i != len(self.supporters) - 1:
+                result += ", "
+        result += "]"
+        result += " new_level: "
+        result += self.curr_level
+        return result
+
+    fn is_horizontal(borrowed self: Self) -> Bool:
+        return self.start.z == self.end.z
+
+    fn overlaps_horizontally(borrowed self: Self, borrowed other: Self) -> Bool:
+        let min_x_self = min(self.start.x, self.end.x)
+        let min_y_self = min(self.start.y, self.end.y)
+        let max_x_self = max(self.start.x, self.end.x)
+        let max_y_self = max(self.start.y, self.end.y)
+
+        let min_x_other = min(other.start.x, other.end.x)
+        let min_y_other = min(other.start.y, other.end.y)
+        let max_x_other = max(other.start.x, other.end.x)
+        let max_y_other = max(other.start.y, other.end.y)
+
+        if self.start.x == self.end.x and other.start.x == other.end.x:
+            if self.start.x != other.start.x:
+                return False
+            return (
+                min_y_self <= min_y_other <= max_y_self
+                or min_y_other <= min_y_self <= max_y_other
+            )
+        elif self.start.x == self.end.x:
+            return (
+                min_y_self <= other.start.y <= max_y_self
+                and min_x_other <= self.start.x <= max_x_other
+            )
+        elif other.start.x == other.end.x:
+            return (
+                min_y_other <= self.start.y <= max_y_other
+                and min_x_self <= other.start.x <= max_x_self
+            )
+        elif self.start.y == self.end.y and other.start.y == other.end.y:
+            if self.start.y != other.start.y:
+                return False
+            return (
+                min_x_self <= min_x_other <= max_x_self
+                or min_x_other <= min_x_self <= max_x_other
+            )
+        elif self.start.y == self.end.y:
+            return (
+                min_x_self <= other.start.x <= max_x_self
+                and min_y_other <= self.start.y <= max_y_other
+            )
+        elif other.start.y == other.end.y:
+            return (
+                min_x_other <= self.start.x <= max_x_other
+                and min_y_self <= other.start.y <= max_y_self
+            )
+
+        return False
+
+    fn __lt__(self, rhs: Self) -> Bool:
+        if self.start.z < rhs.start.z:
+            return True
+        if self.start.z == rhs.start.z:
+            if self.start.z == self.end.z and rhs.start.z != rhs.end.z:
+                return True
+        return False
+
+    fn __le__(self, rhs: Self) -> Bool:
+        return self.start.z <= rhs.start.z
+
+    fn __del__(owned self: Self):
+        pass
+
+
+def print_bricks(borrowed bricks: DynamicVector[Brick]):
+    for i in range(len(bricks)):
+        print(bricks[i])
+
+
+def part1():
+    let path = Path("../data/day22/part1.txt")
+    let text = path.read_text()
+    let lines = text.split("\n")
+
+    var bricks = DynamicVector[Brick]()
+    var max_z: Int = 0
+    for i in range(len(lines) - 1):
+        let str = lines[i].split("~")
+        let brick = Brick(Point(str[0].split(",")), Point(str[1].split(",")), i)
+        bricks.push_back(brick)
+        max_z = max(max(max_z, brick.start.z), brick.end.z)
+
+    var levels = DynamicVector[DynamicVector[Int]]()
+    levels.resize(max_z + 1, DynamicVector[Int]())
+
+    quicksort[Brick](bricks, 0, len(bricks) - 1)
+    for i in range(len(bricks)):
+        bricks[i].id = i
+
+    for i in range(len(bricks)):
+        let brick = bricks[i]
+        levels[brick.end.z].push_back(brick.id)
+
+    for i in range(len(bricks)):
+        let brick = bricks[i]
+        for k in range(brick.start.z - 1, -1, -1):
+            let lower_level_bricks = levels[k]
+            var stop: Bool = False
+            for j in range(len(lower_level_bricks)):
+                let b = bricks[lower_level_bricks[j]]
+                if b.curr_level < k:
+                    continue
+
+                if brick.overlaps_horizontally(bricks[lower_level_bricks[j]]):
+                    bricks[i].supporters.push_back(
+                        bricks[lower_level_bricks[j]].id
+                    )
+                    stop = True
+
+            if stop:
+                let new_level = k + 1 if brick.is_horizontal() else k + 1 + (
+                    bricks[i].end.z - bricks[i].start.z
+                )
+
+                if new_level < bricks[i].curr_level:
+                    bricks[i].curr_level = new_level
+                    levels[bricks[i].curr_level].push_back(brick.id)
+                    # print(String("Drop brick: ") + bricks[i].id + " to level: " +  (bricks[i].curr_level))
+
+                break
+        else:
+            # no supporter found
+            let new_level = 1 if brick.is_horizontal() else 1 + (
+                bricks[i].end.z - bricks[i].start.z
+            )
+            if new_level < bricks[i].curr_level:
+                bricks[i].curr_level = new_level
+                levels[bricks[i].curr_level].push_back(brick.id)
+                # print(String("Drop brick: ") + bricks[i].id + " to level: " +  (bricks[i].curr_level))
+
+    var canNotDisIntegrate = HashSet[IntHasher](len(bricks) * 2)
+    var supporters = HashSet[IntHasher](len(bricks) * 2)
+
+    for i in range(len(bricks)):
+        let brick = bricks[i]
+        if len(brick.supporters) == 1:
+            canNotDisIntegrate.insert(brick.supporters[0])
+
+        for i in range(len(brick.supporters)):
+            supporters.insert(brick.supporters[i])
+
+    # print_bricks(bricks)
+    # print(len(bricks))
+    # print(supporters.size)
+    # print(canNotDisIntegrate.size)
+    return len(bricks) - canNotDisIntegrate.size
+
+
+fn drops(
+    borrowed bricks: DynamicVector[Brick],
+    bid: Int,
+    borrowed brick_supports: DynamicVector[DynamicVector[Int]],
+) raises -> Int:
+    var drops = DynamicVector[Bool]()
+    drops.resize(len(bricks), False)
+
+    var work_list = SlowQueue[Int](len(bricks))
+    work_list.push_back(bid)
+    drops[bid] = True
+
+    while work_list.size > 0:
+        let curr = work_list.front()
+        work_list.pop_front()
+        let bcurr = bricks[curr]
+
+        var will_drop = True
+        for i in range(len(bcurr.supporters)):
+            if not drops[bcurr.supporters[i]]:
+                will_drop = False
+                break
+
+        if will_drop:
+            drops[curr] = True
+
+        for i in range(len(brick_supports[curr])):
+            if not drops[brick_supports[curr][i]]:
+                work_list.push_back(brick_supports[curr][i])
+
+    var result: Int = 0
+
+    for i in range(len(drops)):
+        if drops[i]:
+            result += 1
+
+    return result - 1
+
+
+fn print_brick_supports(
+    borrowed brick_supports: DynamicVector[DynamicVector[Int]],
+):
+    for i in range(len(brick_supports)):
+        var str = String("Brick ") + i
+        str += " supports["
+        for j in range(len(brick_supports[i])):
+            str += brick_supports[i][j]
+            if j != len(brick_supports[i]) - 1:
+                str += ","
+        str += "]"
+        print(str)
+
+
+def part2():
+    let path = Path("../data/day22/part2.txt")
+    let text = path.read_text()
+    let lines = text.split("\n")
+
+    var bricks = DynamicVector[Brick]()
+    var max_z: Int = 0
+    for i in range(len(lines) - 1):
+        let str = lines[i].split("~")
+        let brick = Brick(Point(str[0].split(",")), Point(str[1].split(",")), i)
+        bricks.push_back(brick)
+        max_z = max(max(max_z, brick.start.z), brick.end.z)
+
+    var levels = DynamicVector[DynamicVector[Int]]()
+    levels.resize(max_z + 1, DynamicVector[Int]())
+
+    quicksort[Brick](bricks, 0, len(bricks) - 1)
+    for i in range(len(bricks)):
+        bricks[i].id = i
+
+    for i in range(len(bricks)):
+        let brick = bricks[i]
+        levels[brick.end.z].push_back(brick.id)
+
+    for i in range(len(bricks)):
+        let brick = bricks[i]
+        for k in range(brick.start.z - 1, -1, -1):
+            let lower_level_bricks = levels[k]
+            var stop: Bool = False
+            for j in range(len(lower_level_bricks)):
+                let b = bricks[lower_level_bricks[j]]
+                if b.curr_level < k:
+                    continue
+
+                if brick.overlaps_horizontally(bricks[lower_level_bricks[j]]):
+                    bricks[i].supporters.push_back(
+                        bricks[lower_level_bricks[j]].id
+                    )
+                    stop = True
+
+            if stop:
+                let new_level = k + 1 if brick.is_horizontal() else k + 1 + (
+                    bricks[i].end.z - bricks[i].start.z
+                )
+
+                if new_level < bricks[i].curr_level:
+                    bricks[i].curr_level = new_level
+                    levels[bricks[i].curr_level].push_back(brick.id)
+                    # print(String("Drop brick: ") + bricks[i].id + " to level: " +  (bricks[i].curr_level))
+
+                break
+        else:
+            # no supporter found
+            let new_level = 1 if brick.is_horizontal() else 1 + (
+                bricks[i].end.z - bricks[i].start.z
+            )
+            if new_level < bricks[i].curr_level:
+                bricks[i].curr_level = new_level
+                levels[bricks[i].curr_level].push_back(brick.id)
+                # print(String("Drop brick: ") + bricks[i].id + " to level: " +  (bricks[i].curr_level))
+
+    var bricks_to_check = DynamicVector[Bool]()
+    bricks_to_check.resize(len(bricks), False)
+    # print_bricks(bricks)
+
+    for i in range(len(bricks)):
+        let brick = bricks[i]
+        if len(brick.supporters) == 1:
+            bricks_to_check[brick.supporters[0]] = True
+
+    var brick_supports = DynamicVector[DynamicVector[Int]]()
+    brick_supports.resize(len(bricks), DynamicVector[Int]())
+
+    for i in range(len(bricks)):
+        let brick = bricks[i]
+        for j in range(len(brick.supporters)):
+            brick_supports[brick.supporters[j]].push_back(i)
+
+    # print_brick_supports(brick_supports)
+
+    var result: Int = 0
+    for i in range(len(bricks)):
+        if bricks_to_check[i]:
+            let r = drops(bricks, i, brick_supports)
+            # print(String("Move brick ") + i + " will cause " + r + " bricks to drop.")
+            result += r
+
+    return result
+
+    # print(len(bricks))
+    # print(supporters.size)
+    # print(canNotDisIntegrate.size)
+
+
+fn main():
+    try:
+        let answer1 = part1()
+        print(answer1)
+        let answer2 = part2()
+        print(answer2)
+
+    except e:
+        print(e)
