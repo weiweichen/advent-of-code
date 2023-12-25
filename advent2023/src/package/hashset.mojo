@@ -42,3 +42,11 @@ struct HashSet[K: HashKeyT]:
         self.data = DynamicVector[DynamicVector[K]]()
         self.data.resize(self.capacity, DynamicVector[K]())
         self.size = 0
+
+    fn erase(inout self: Self, key: K):
+        let hash = self._rehash(key.hash())
+        for i in range(len(self.data[hash])):
+            if self.data[hash][i] == key:
+                for j in range(i + 1, len(self.data[hash])):
+                    self.data[hash][j-1] = self.data[hash][j]
+                _ = self.data[hash].pop_back()
