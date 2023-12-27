@@ -157,6 +157,7 @@ def part1():
 
 
 def part2():
+    # mojo-fied solution from https://t.ly/9zU4o
     let path = Path("../data/day24/part2.txt")
     let text = path.read_text()
     let lines = text.split("\n")
