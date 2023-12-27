@@ -1,0 +1,289 @@
+from math import gcd, lcm, max, min, abs
+from pathlib import Path
+from package.hasher import IntHasher, StringHasher
+from package.hashmap import HashMap
+from package.hashset import HashSet
+from package.quicksort import quicksort
+from package.slowqueue import SlowQueue
+from package.traits import Equitable, HashKeyT, Sortable
+
+
+@value
+struct Triplet(Stringable, CollectionElement, Sortable):
+    var x: Int
+    var y: Int
+    var z: Int
+
+    fn __init__(inout self: Self, x: Int, y: Int, z: Int):
+        self.x = x
+        self.y = y
+        self.z = z
+
+    fn __init__(inout self: Self, vec: DynamicVector[String]) raises:
+        self.x = atol(vec[0])
+        self.y = atol(vec[1])
+        self.z = atol(vec[2])
+
+    fn __str__(self: Self) -> String:
+        return String("[") + self.x + ", " + self.y + ", " + self.z + "]"
+
+    fn __eq__(self: Self, rhs: Self) -> Bool:
+        return self.x == rhs.x and self.y == rhs.y and self.z == rhs.z
+
+    fn __lt__(self: Self, rhs: Self) -> Bool:
+        if self.x < rhs.x:
+            return True
+        elif self.x > rhs.x:
+            return False
+
+        if self.y < rhs.y:
+            return True
+        elif self.x > rhs.x:
+            return False
+
+        return self.z < rhs.z
+
+    fn __le__(self: Self, rhs: Self) -> Bool:
+        return self < rhs or self == rhs
+
+    fn hash(self: Self) -> Int:
+        let p: Int = 31
+        let m: Int = 10000009
+
+        var hash_value: Int = 0
+        var p_pow: Int = 1
+        var v = DynamicVector[Int]()
+        v.push_back(self.x)
+        v.push_back(self.y)
+        v.push_back(self.z)
+        for i in range(len(v)):
+            hash_value = (hash_value + int(v[i] * p_pow)) % m
+            p_pow = (p_pow * p) % m
+
+        return hash_value
+
+
+@value
+struct HailStone(CollectionElement, Stringable, Sortable):
+    var position: Triplet
+    var velocity: Triplet
+
+    fn __init__(
+        inout self: Self,
+        borrowed p: DynamicVector[String],
+        borrowed v: DynamicVector[String],
+    ) raises:
+        self.position = Triplet(p)
+        self.velocity = Triplet(v)
+
+    fn __str__(self: Self) -> String:
+        return (
+            String("Position") + self.position + ", Velocity: " + self.velocity
+        )
+
+    fn __eq__(self: Self, rhs: Self) -> Bool:
+        return self.position == rhs.position and self.velocity == rhs.position
+
+    fn __lt__(self: Self, rhs: Self) -> Bool:
+        return self.position < rhs.position
+
+    fn __le__(self: Self, rhs: Self) -> Bool:
+        return self.position <= rhs.position
+
+    fn in_range_xy(
+        borrowed self: Self,
+        borrowed rhs: Self,
+        borrowed x_range: StaticTuple[2, Float64],
+        borrowed y_range: StaticTuple[2, Float64],
+    ) -> Bool:
+        # t2 = (Pax * Vay - Pbx * Vay - Pay * Vax + Pby *Vax) / (Vbx * Vay - Vby * Vax)
+        # x = Pbx + Vbx * t2
+        # y = Pby + Vby * t2
+
+        let nominator2 = self.position.x * self.velocity.y - rhs.position.x * self.velocity.y - self.position.y * self.velocity.x + rhs.position.y * self.velocity.x
+
+        let nominator1 = rhs.velocity.y * self.position.x + rhs.velocity.x * rhs.position.y - rhs.velocity.y * rhs.position.x - rhs.velocity.x * self.position.y
+
+        let denominator = rhs.velocity.x * self.velocity.y - rhs.velocity.y * self.velocity.x
+
+        let x = rhs.position.x + rhs.velocity.x * (nominator2 / denominator)
+        let y = rhs.position.y + rhs.velocity.y * (nominator2 / denominator)
+
+        if denominator == 0:
+            return False
+
+        if nominator1 / denominator < 0 or nominator2 / denominator < 0:
+            return False
+
+        return x_range[0] <= x <= x_range[1] and y_range[0] <= y <= y_range[1]
+
+
+def part1():
+    let path = Path("../data/day24/part1.txt")
+    let text = path.read_text()
+    let lines = text.split("\n")
+
+    var hail_stones = DynamicVector[HailStone]()
+
+    for i in range(len(lines) - 1):
+        let s0 = lines[i].split(" @ ")[0].split(", ")
+        let s1 = lines[i].split(" @ ")[1].split(", ")
+
+        var p = DynamicVector[String]()
+        var v = DynamicVector[String]()
+
+        for i in range(3):
+            var a = s0[i].split(" ")
+            p.push_back(a[len(a) - 1])
+            a = s1[i].split(" ")
+            v.push_back(a[len(a) - 1])
+
+        let stone = HailStone(p, v)
+        # print(stone)
+        hail_stones.push_back(stone)
+
+    let x_range = StaticTuple[2, Float64](200000000000000, 400000000000000)
+    let y_range = StaticTuple[2, Float64](200000000000000, 400000000000000)
+
+    var result: Int = 0
+    for i in range(len(hail_stones)):
+        for j in range(i + 1, len(hail_stones)):
+            let stone1 = hail_stones[i]
+            let stone2 = hail_stones[j]
+            if stone1.in_range_xy(stone2, x_range, y_range):
+                result += 1
+
+    return result
+
+
+def part2():
+    let path = Path("../data/day24/part2.txt")
+    let text = path.read_text()
+    let lines = text.split("\n")
+
+    var hail_stones = DynamicVector[HailStone]()
+    for i in range(len(lines) - 1):
+        let s0 = lines[i].split(" @ ")[0].split(", ")
+        let s1 = lines[i].split(" @ ")[1].split(", ")
+
+        var p = DynamicVector[String]()
+        var v = DynamicVector[String]()
+
+        for i in range(3):
+            var a = s0[i].split(" ")
+            p.push_back(a[len(a) - 1])
+            a = s1[i].split(" ")
+            v.push_back(a[len(a) - 1])
+
+        let stone = HailStone(p, v)
+        hail_stones.push_back(stone)
+
+    var x_candidates = HashSet[IntHasher](1000)
+    var y_candidates = HashSet[IntHasher](1000)
+    var z_candidates = HashSet[IntHasher](1000)
+    var x_assigned: Bool = False
+    var y_assigned: Bool = False
+    var z_assigned: Bool = False
+
+    quicksort[HailStone](hail_stones, 0, len(hail_stones) - 1)
+
+    # for i in range(len(hail_stones)):
+    #    print(hail_stones[i])
+
+    for i in range(len(hail_stones)):
+        for j in range(i + 1, len(hail_stones)):
+            let stone1 = hail_stones[i]
+            let stone2 = hail_stones[j]
+            # print("========================")
+            # print(stone1)
+            # print(stone2)
+
+            if (
+                stone1.velocity.x == stone2.velocity.x
+                and abs(stone1.velocity.x) > 100
+            ):
+                var new_x = HashSet[IntHasher](2000)
+                let difference = stone2.position.x - stone1.position.x
+                for v in range(-1000, 1000):
+                    if v == stone1.velocity.x:
+                        continue
+                    if difference % (v - stone1.velocity.x) == 0:
+                        new_x.insert(v)
+                if not x_assigned:
+                    x_candidates = new_x
+                    x_assigned = True
+                else:
+                    x_candidates = x_candidates.intersect(new_x)
+
+            if (
+                stone1.velocity.y == stone2.velocity.y
+                and abs(stone1.velocity.y) > 100
+            ):
+                var new_y = HashSet[IntHasher](2000)
+                let difference = stone2.position.y - stone1.position.y
+                for v in range(-1000, 1000):
+                    if v == stone1.velocity.y:
+                        continue
+                    if difference % (v - stone1.velocity.y) == 0:
+                        new_y.insert(v)
+
+                if not y_assigned:
+                    y_candidates = new_y
+                    y_assigned = True
+                else:
+                    y_candidates = y_candidates.intersect(new_y)
+
+            if (
+                stone1.velocity.z == stone2.velocity.z
+                and abs(stone1.velocity.z) > 100
+            ):
+                var new_z = HashSet[IntHasher](2000)
+                let difference = stone2.position.z - stone1.position.z
+                for v in range(-1000, 1000):
+                    if v == stone1.velocity.z:
+                        continue
+                    if difference % (v - stone1.velocity.z) == 0:
+                        new_z.insert(v)
+                if not z_assigned:
+                    z_candidates = new_z
+                    z_assigned = True
+                else:
+                    z_candidates = z_candidates.intersect(new_z)
+
+    let new_vx = x_candidates.content()[0].data
+    let new_vy = y_candidates.content()[0].data
+    let new_vz = z_candidates.content()[0].data
+    print(String("") + new_vx + " " + new_vy + " " + new_vz)
+    print(
+        String("")
+        + x_candidates.size
+        + " "
+        + y_candidates.size
+        + " "
+        + z_candidates.size
+    )
+
+    let stone0 = hail_stones[0]
+    let stone1 = hail_stones[1]
+    let v0 = (stone0.velocity.y - new_vy) / (stone0.velocity.x - new_vx)
+    let v1 = (stone1.velocity.y - new_vy) / (stone1.velocity.x - new_vx)
+    let d0 = stone0.position.y - (v0 * stone0.position.x)
+    let d1 = stone1.position.y - (v1 * stone1.position.x)
+    let x_pos = int((d1 - d0) / (v0 - v1))
+    let y_pos = int(v0 * x_pos + d0)
+    let time = (x_pos - stone0.position.x) // (stone0.velocity.x - new_vx)
+    let z_pos = stone0.position.z + (stone0.velocity.z - new_vz) * time
+
+    print(String("") + x_pos + " " + y_pos + " " + z_pos + " " + time)
+    return x_pos + y_pos + z_pos
+
+
+fn main():
+    try:
+        let answer1 = part1()
+        print(answer1)
+        let answer2 = part2()
+        print(answer2)
+
+    except e:
+        print(e)

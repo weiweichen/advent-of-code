@@ -1,0 +1,30 @@
+Hailstone A: 19, 13, 30 @ -2, 1, -2
+Hailstone B: 18, 19, 22 @ -1, -1, -2
+
+
+19 - 2x, 13 + x
+18 - y, 19 - y
+
+
+19 - 2x = 18 - y
+13 + x = 19 - y
+
+-2x + y = -1
+x + y = 6
+
+-2 1
+1  1
+
+Pax + Vax * t1 = Pbx + Vbx * t2
+Pay + Vay * t1 = Pby + Vby * t2
+
+Pax * Vay + Vax * Vay * t1 = Pbx * Vay + Vbx * Vay * t2
+Pay * Vax + Vax * Vay * t1 = Pby * Vax + Vby * Vax * t2
+
+Vby * Pax + Vby * Vax * t1 = Vby * Pbx + Vby * Vbx * t2
+Vbx * Pay + Vbx * Vay * t1 = Vbx * Pby + Vbx * Vby * t2
+
+t1 = vby * pbx - vby * pax - vbx * pby + bvx * pay / (vby * vax - vbx * vay)
+t2 = (Pax * Vay - Pbx * Vay - Pay * Vax + Pby *Vax) / (Vbx * Vay - Vby * Vax)
+x = Pbx + Vbx * t2
+y = Pby + Vby * t2
