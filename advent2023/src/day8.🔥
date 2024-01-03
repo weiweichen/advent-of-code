@@ -1,6 +1,6 @@
 from math import gcd, lcm
 from pathlib import Path
-from package.hashmap import HashMapKeyT, HashMap
+from package.hashmap import HashKeyT, HashMap
 
 
 struct Direction(Copyable):
@@ -18,7 +18,7 @@ struct Direction(Copyable):
         self.right = existing.right
 
 
-struct HashKey(HashMapKeyT):
+struct HashKey(HashKeyT):
     var key: String
 
     fn __init__(inout self: Self, borrowed key: String):

@@ -117,7 +117,7 @@ struct Point(Stringable, HashKeyT, Sortable):
             elif dir == "e":
                 return Point(row, col + 1, steps + "e", "e")
 
-        print(self.dir + " --> " + dir)
+        # print(self.dir + " --> " + dir)
 
         return Point(row, col, steps, "")
 
@@ -199,8 +199,8 @@ def part1():
     for i in range(height):
         for j in range(width):
             blocks[i][j] = atol(lines[i][j])
-            print_no_newline(blocks[i][j])
-        print("")
+            # print_no_newline(blocks[i][j])
+        # print("")
 
     var seen = HashSet[Point](3042161)
     var work_list = PriorityQueue[Point](100000)
@@ -252,8 +252,8 @@ def part2():
     for i in range(height):
         for j in range(width):
             blocks[i][j] = atol(lines[i][j])
-            print_no_newline(blocks[i][j])
-        print("")
+            # print_no_newline(blocks[i][j])
+        # print("")
 
     var seen = HashSet[Point](3042161)
     var work_list = PriorityQueue[Point](100000)

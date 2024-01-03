@@ -1,9 +1,9 @@
 from math import gcd, lcm, max, min
 from pathlib import Path
-from package.hashmap import HashMapKeyT, HashMap
+from package.hashmap import HashKeyT, HashMap
 
 
-struct MapKey(HashMapKeyT):
+struct MapKey(HashKeyT):
     var key: String
 
     fn __init__(inout self: Self, borrowed key: String):
@@ -40,7 +40,7 @@ fn find_mirror(borrowed lava: DynamicVector[String]) raises -> Int:
             row_counts[i] = map[lava[i]]
         else:
             row_counts[i] = count
-            map.insert_or_update(lava[i], count)
+            _ = map.insert_or_update(lava[i], count)
             count += 1
 
     # print_no_newline("row counts: ")
@@ -94,7 +94,7 @@ fn find_mirror_with_smudge(borrowed lava: DynamicVector[String]) raises -> Int:
             row_counts[i] = map[lava[i]]
         else:
             row_counts[i] = count
-            map.insert_or_update(lava[i], count)
+            _ = map.insert_or_update(lava[i], count)
             count += 1
 
     # print_no_newline("row counts: ")

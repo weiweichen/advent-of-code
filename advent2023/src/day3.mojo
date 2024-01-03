@@ -1,5 +1,4 @@
 from pathlib import Path
-from utils.vector import UnsafeFixedVector
 
 
 fn get_next_number(str: String, pos: Int) -> StaticIntTuple[3]:
@@ -83,8 +82,8 @@ fn update_gear(
     row: Int,
     cols: Int,
     rows: Int,
-    inout values: UnsafeFixedVector[Int],
-    inout counts: UnsafeFixedVector[Int],
+    inout values: DynamicVector[Int],
+    inout counts: DynamicVector[Int],
     borrowed lines: DynamicVector[String],
     number: Int,
 ):
@@ -109,8 +108,8 @@ fn update_number(
     cols: Int,
     rows: Int,
     size: Int,
-    inout values: UnsafeFixedVector[Int],
-    inout counts: UnsafeFixedVector[Int],
+    inout values: DynamicVector[Int],
+    inout counts: DynamicVector[Int],
     borrowed lines: DynamicVector[String],
     number: Int,
 ):
@@ -130,8 +129,8 @@ def part2():
     let cols = len(lines[0])
     let rows = len(lines)
 
-    var values = UnsafeFixedVector[Int](cols * rows)
-    var counts = UnsafeFixedVector[Int](cols * rows)
+    var values = DynamicVector[Int](cols * rows)
+    var counts = DynamicVector[Int](cols * rows)
 
     for i in range(cols * rows):
         values.append(1)

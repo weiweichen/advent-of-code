@@ -1,10 +1,10 @@
 from math import gcd, lcm, max
 from pathlib import Path
-from package.hashmap import HashMapKeyT, HashMap
+from package.hashmap import HashKeyT, HashMap
 from package.slowqueue import SlowQueue
 
 
-struct Key(HashMapKeyT):
+struct Key(HashKeyT):
     var dish: String
     var dir: Int
 

@@ -142,7 +142,7 @@ fn walk(
                     next_points.push_back(p1)
         curr_points = next_points
 
-    print(String("curr_points size: ") + len(curr_points))
+    # print(String("curr_points size: ") + len(curr_points))
     # print_garden(garden)
     return len(curr_points)
 

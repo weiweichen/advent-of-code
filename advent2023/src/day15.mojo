@@ -1,6 +1,5 @@
 from math import gcd, lcm, max, min
 from pathlib import Path
-from package.hashmap import HashMapKeyT, HashMap
 
 
 fn holiday_hash(borrowed sequence: String) -> Int:

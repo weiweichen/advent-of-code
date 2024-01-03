@@ -1,10 +1,10 @@
 from math import gcd, lcm, max
 from pathlib import Path
-from package.hashmap import HashMapKeyT, HashMap
+from package.hashmap import HashKeyT, HashMap
 from package.slowqueue import SlowQueue
 
 
-struct Position(CollectionElement, Stringable, HashMapKeyT):
+struct Position(CollectionElement, Stringable, HashKeyT):
     var row: Int
     var col: Int
     var dir: StaticIntTuple[2]

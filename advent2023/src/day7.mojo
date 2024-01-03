@@ -30,6 +30,12 @@ struct Cards(Sortable):
                 return self.get_idx(i) < rhs.get_idx(i)
         return False
 
+    fn __le__(self, rhs: Self) -> Bool:
+        for i in range(len(self.card)):
+            if self.card[i] != rhs.card[i]:
+                return self.get_idx(i) < rhs.get_idx(i)
+        return True
+
     fn get_idx(borrowed self: Cards, idx: Int) -> Int:
         let ch = self.card[idx]
         if isdigit(ord(ch)):

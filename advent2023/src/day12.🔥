@@ -1,10 +1,10 @@
 from math import gcd, lcm, max
 from pathlib import Path
-from package.hashmap import HashMapKeyT, HashMap
+from package.hashmap import HashKeyT, HashMap
 from package.slowqueue import SlowQueue
 
 
-struct State(HashMapKeyT):
+struct State(HashKeyT):
     var springs: String
     var ss: Int
     var records: DynamicVector[Int]
@@ -82,7 +82,7 @@ fn solve(
     if cache.contains(key):
         return cache[key]
     let result = solve_inner(springs, ss, records, rs, cache)
-    cache.insert_or_update(key, result)
+    _ = cache.insert_or_update(key, result)
     return result
 
 
@@ -214,7 +214,7 @@ def part2():
         if i % 100 == 0:
             cache.clear()
 
-        #print(res)
+        # print(res)
 
     return result
 

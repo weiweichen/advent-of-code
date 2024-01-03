@@ -237,12 +237,12 @@ def part2():
     print(start)
     print(end)
 
-    var nodes: Int = 0
-    var nodes_to_process: Int = 0
+    let nodes: Int = 0
+    let nodes_to_process: Int = 0
 
     var seen = HashSet[Point](1128889)
     var condensed_graph = HashMap[Point, DynamicVector[Point]](1128889)
-    var condensed_nodes = DynamicVector[Point]()
+    let condensed_nodes = DynamicVector[Point]()
     var work_list = SlowQueue[Point](height * width)
 
     work_list.push_back(start)
