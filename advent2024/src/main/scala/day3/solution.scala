@@ -34,6 +34,7 @@ class solution(input: String):
     })._1
     
   def run(): Unit =
+    println("===== Day 3 =====")
     print("Puzzle 1: ")
     println(prob1())
 

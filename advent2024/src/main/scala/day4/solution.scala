@@ -46,6 +46,7 @@ class solution(input: String):
     matchMASGrid(lines)
 
   def run(): Unit =
+    println("===== Day 4 =====")
     print("Puzzle 1: ")
     println(prob1())
 

@@ -28,6 +28,7 @@ class solution(input: String):
     s.count(l => isSafe(l)) + s2.size
 
   def run(): Unit =
+    println("===== Day 2 =====")
     print("Puzzle 1: ")
     println(prob1())
 

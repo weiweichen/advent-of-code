@@ -23,5 +23,6 @@ class solution(input: String):
     println(left.map(l => l * histogramRight.getOrElse(l, 0)).sum)
 
   def run(): Unit =
+    println("===== Day 1 =====")
     prob1()
     prob2()
