@@ -121,7 +121,13 @@ class solution(input: String):
     println(prob1())
 
     print("Puzzle 2: ")
+    val t0 = System.nanoTime()
     println(prob2())
+    val t1 = System.nanoTime()
+    val elapsed = {
+      (t1 - t0) / 1.0e6
+    }
+    println(s"Elapsed time: $elapsed ms")
 
 
 
