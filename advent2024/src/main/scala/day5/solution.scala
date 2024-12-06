@@ -5,7 +5,7 @@ import collection.mutable.HashSet
 import scala.collection.mutable
 
 class solution(input: String):
-  
+
   def getOrdered(lines: List[String]): List[mutable.HashSet[Int]] =
     val orders = List.fill(100) {mutable.HashSet[Int]()}
     var parseOrder = true
