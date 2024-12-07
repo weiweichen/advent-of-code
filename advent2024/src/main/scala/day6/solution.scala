@@ -127,7 +127,7 @@ class solution(input: String):
     val elapsed = {
       (t1 - t0) / 1.0e6
     }
-    println(s"Elapsed time: $elapsed ms")
+    println(s"Part2 Elapsed time: $elapsed ms")
 
 
 
