@@ -9,15 +9,12 @@ import scala.math.BigInt
 import scala.math.pow
 
 class Point(var x: Int, var y: Int):
-  def nextPoint(dir: Point): Point =
-    Point(x + dir.x, y + dir.y)
-
   override def toString: String =
     s"($x, $y)"
 
   def outOfRange(height: Int, width: Int): Boolean =
     x < 0 || x >= width || y < 0 || y >= height
-    
+
   def antinodes(other: Point, height: Int, width: Int): List[Point] =
     val dx = (x - other.x).abs
     val dy = (y - other.y).abs
@@ -45,7 +42,7 @@ class Point(var x: Int, var y: Int):
     val dy = (y - other.y).abs
     val self = Point(x, y)
     //println(s"p1: ${self.toString}, p2: ${other.toString}")
-    
+
     // p1 will always do -dx, -dy
     // p2 will always do +dx, +dy
     val (p1, p2, dxx, dyy) =
@@ -62,20 +59,20 @@ class Point(var x: Int, var y: Int):
         // right-down
         (other, self, dx, dy)
       }
-      
+
     val result = new ListBuffer[Point]()
-    var currP = p1 
+    var currP = p1
     var stop = false
     while(!stop) {
-      val nextP = Point(currP.x - dxx, currP.y - dyy) 
+      val nextP = Point(currP.x - dxx, currP.y - dyy)
       stop = nextP.outOfRange(height, width)
       if(!stop) {
        result.append(nextP)
-       //println(s"next: ${nextP.toString}") 
+       //println(s"next: ${nextP.toString}")
       }
       currP = nextP
     }
-    
+
     currP = p2
     stop = false
     while (!stop) {
@@ -87,7 +84,7 @@ class Point(var x: Int, var y: Int):
       }
       currP = nextP
     }
-      
+
     result.toList
 
 class solution(input: String):
@@ -160,11 +157,11 @@ class solution(input: String):
     //println(grid.map(g => g.mkString).mkString("\n", "\n", ""))
     grid.map(g => g.count(c => {
       c == '#' || (c != '.' && antennas(c).length > 1)
-    })).sum 
+    })).sum
 
 
   def run(): Unit =
-    println("===== Day 7 =====")
+    println("===== Day 8 =====")
     print("Puzzle 1: ")
     println(prob1())
 
