@@ -167,4 +167,3 @@ class solution(input: String):
 
     print("Puzzle 2: ")
     println(prob2())
-    val t1 = System.nanoTime()
