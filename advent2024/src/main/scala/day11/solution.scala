@@ -27,53 +27,17 @@ class solution(input: String):
       })
     })
     list.groupBy(v => v).map((k, v) => (k, v.length))
-  
+ 
   def calc(stones: List[Long], blinks: Int) : Long =
     var g = stones.groupBy(v => v).map((k, l) => (k, l.length.toLong))
-    //println(s"\nstep 0: ${g.map((k, v) => s"($k, $v)").mkString("", " ", "")}")
+    // println(s"\nstep 0: ${g.map((k, v) => s"($k, $v)").mkString("", " ", "")}")
     (1 to blinks).foreach(step => {
-      val acc = mutable.Map[Long, Long]()
-      g.map((k, v) => {
+      g = g.map((k, v) => {
         blink(k, 1).map((nk, nv) => (nk, nv * v))
-      }).foreach(currMap => {
-        currMap.foreach((k, v) => {
-          acc.get(k) match {
-            case Some(s) => acc.update(k, s + v)
-            case _ => acc.update(k, v)
-          }
-        })
-      })
-      g = acc.toMap
-      // println(s"\nstep $step: ${g.map((k, v) => s"($k, $v)").mkString("", " ", "")}")
+      }).flatten().groupBy((k, v) => k).map((k, m) => (k, m.map((_, v)=> v).sum.toLong))
+      //println(s"\nstep $step: ${g.map((k, v) => s"($k, $v)").mkString("", " ", "")}")
     })
     g.map((k, l) => l).sum
-
-
-  def prob1Old(): Long =
-    val lines = fromFile(input).getLines.toList
-    var stones = lines.head.split(" +").map(s => s.toLong).toList
-    val steps = 25
-
-    println(s"step 0: ${stones.mkString("", " ", "")}")
-
-    (1 to steps).foreach( step => {
-      stones = stones.flatMap(s => {
-        s match {
-          case 0 => List(1)
-          case _ =>
-            val numDigits = math.floor(math.log10(s)).toInt
-            if (numDigits % 2 == 1) {
-              val base = math.pow(10, (numDigits + 1) / 2).toInt
-              List(s / base, s % base)
-            } else {
-              List(s * 2024)
-            }
-        }
-      })
-      println(s"blink $step: length ${stones.length} ${stones.distinct.length}" )
-      //println(s"step ${step}: ${stones.mkString("", " ", "")}")
-    })
-    stones.length
 
   def prob1(): Long =
     val lines = fromFile(input).getLines.toList
