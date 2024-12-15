@@ -85,7 +85,7 @@ class solution(input: String):
 
 
   def run(): Unit =
-    println("===== Day 13 =====")
+    println("===== Day 14 =====")
     print("Puzzle 1: ")
     val t0 = System.nanoTime()
     println(prob1())

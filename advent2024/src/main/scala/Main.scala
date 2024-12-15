@@ -1,17 +1,3 @@
-import day1.*
-import day2.*
-import day3.*
-import day4.*
-import day5.*
-import day6.*
-import day7.*
-import day8.*
-import day9.*
-import day10.*
-import day11.*
-import day12.*
-import day13.*
-import day14.*
 
 @main
 def run(): Unit =
@@ -28,5 +14,6 @@ def run(): Unit =
   // day11.solution("data/day11/input.txt").run()
   // day12.solution("data/day12/input.txt").run()
   // day13.solution("data/day13/input.txt").run()
-  day14.solution("data/day14/input.txt").run()
+  // day14.solution("data/day14/input.txt").run()
+  day15.solution("data/day15/input.txt").run()
 
