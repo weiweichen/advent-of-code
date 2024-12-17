@@ -99,7 +99,6 @@ class solution(input: String):
     
     
   def prob2(): Long =
-    val lines = fromFile(input).getLines.toList
     val map = fromFile(input).getLines.toList
     val start = Point(1, map.length - 2)
     val end = Point(map.head.length - 2, 1)
