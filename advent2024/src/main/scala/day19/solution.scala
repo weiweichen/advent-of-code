@@ -51,9 +51,9 @@ class solution(input: String):
     val towels = lines.head.split(", ").toSet
     val longest = towels.map(t => t.length).max
     val designs = lines.drop(2)
-    
+
+    val cache = mutable.HashMap[String, Long]()
     designs.filter(d => isValid(d, towels, longest)).map(d =>  {
-      val cache = mutable.HashMap[String, Long]()
       calc(d, towels, longest, cache)
     }).sum
 
