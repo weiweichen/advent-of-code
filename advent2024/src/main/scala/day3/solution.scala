@@ -36,7 +36,13 @@ class solution(input: String):
   def run(): Unit =
     println("===== Day 3 =====")
     print("Puzzle 1: ")
+    val t0 = System.nanoTime()
     println(prob1())
+    val t1 = System.nanoTime()
+    println(s"Part1 Elapsed time: ${(t1 - t0) / 1.0e6}ms")
 
+    val t2 = System.nanoTime()
     print("Puzzle 2: ")
     println(prob2())
+    val t3 = System.nanoTime()
+    println(s"Part2 Elapsed time: ${(t3 - t2) / 1.0e6}ms")

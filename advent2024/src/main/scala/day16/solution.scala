@@ -143,5 +143,5 @@ class solution(input: String):
     print("Puzzle 2: ")
     println(prob2())
     val t3 = System.nanoTime()
-    println(s"Part1 Elapsed time: ${(t3 - t2) / 1.0e6}ms")
+    println(s"Part2 Elapsed time: ${(t3 - t2) / 1.0e6}ms")
 
