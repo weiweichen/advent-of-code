@@ -74,10 +74,10 @@ class solution(input: String):
 
   def prob2(): Long =
     lines.map(line => calc(line, 26) * line.substring(0, 3).toLong).sum
-    
+
 
   def run(): Unit =
-    println("===== Day 19 =====")
+    println("===== Day 21 =====")
     print("Puzzle 1: ")
     val t0 = System.nanoTime()
     println(prob1())
