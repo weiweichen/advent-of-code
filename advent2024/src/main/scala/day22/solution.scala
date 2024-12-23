@@ -68,7 +68,7 @@ class solution(input: String):
     result.map((p, s) => s).max
 
   def run(): Unit =
-    println("===== Day 21 =====")
+    println("===== Day 22 =====")
     print("Puzzle 1: \n")
     val t0 = System.nanoTime()
     println(prob1())
