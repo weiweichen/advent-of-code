@@ -104,10 +104,11 @@ class Graph(lines: List[String]):
     pairsToSwap = pairsToSwap :+ w1 :+ w2
 
   def computeZ(n: Int) : Unit =
-    // c(0) = x00 and y00
-    // d(0) = x00 XOR y00
-    // d(n) = (xn ^ yn) ^ c(n-1)
-    // c(n) =  (xn & yn) | (((xn ^ yn) & c(n-1)))
+    // Bit operations to do addition z = x + y 
+    // z(0) = x(0) ^ y(0)
+    // c(0) = x(0) & y(0)
+    // z(n) = (x(n) ^ y(n)) ^ c(n - 1)
+    // c(n) = (x(n) & y(n)) | (((x(n) ^ y(n)) & c(n - 1))) 
     val sn = if(n < 10) "0"+n.toString else n.toString
 
     val xorExpr = s"(x${sn} XOR y${sn})"
