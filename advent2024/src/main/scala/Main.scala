@@ -23,5 +23,6 @@ def run(): Unit =
   // day20.solution("data/day20/input.txt").run()
   // day21.solution("data/day21/input.txt").run()
   // day22.solution("data/day22/input.txt").run()
-  day23.solution("data/day23/input.txt").run()
+  // day23.solution("data/day23/input.txt").run()
+  day24.solution("data/day24/input.txt").run()
 
