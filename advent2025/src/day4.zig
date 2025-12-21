@@ -1,35 +1,5 @@
 const std = @import("std");
 
-pub fn bankMaxNHelper(bank: []u8, start: usize, end: usize) struct { pos: usize, val: u8 } {
-    var max = bank[end];
-    var p: usize = end;
-
-    for (0..(end - start + 1)) |i| { // end is exclusive
-        const c = end - i;
-        if (bank[c] >= max) {
-            p = c;
-            max = bank[c];
-        }
-    }
-
-    return .{ .pos = p, .val = max };
-}
-
-pub fn bankMaxN(bank: []u8, n: usize) i128 {
-    var start: usize = 0;
-    var end: usize = bank.len - n;
-    var result: i128 = 0;
-
-    for (0..n) |_| {
-        const r = bankMaxNHelper(bank, start, end);
-        end += 1;
-        start = r.pos + 1;
-        result = result * 10 + (@as(i128, r.val) - 48);
-        // std.debug.print("r.pos: {}, r.val: {}\n", .{r.pos, r.val - 48});
-    }
-    return result;
-}
-
 pub fn readMatrix(allocator: std.mem.Allocator, filename: []const u8) !struct {
     data: []u8,
     rows: usize,
@@ -144,7 +114,7 @@ pub fn main() !void {
     for (0..matrix.rows) |i| {
         for (0..matrix.cols) |j| {
             if (check(matrix.data, j, i, matrix.rows, matrix.cols)) {
-                result1+= 1;
+                result1 += 1;
                 try list.append(.{ .x = j, .y = i });
             }
         }
