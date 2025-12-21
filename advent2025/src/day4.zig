@@ -108,14 +108,17 @@ pub fn main() !void {
     var result1: i64 = 0;
     var result2: i64 = 0;
 
-    var list = std.array_list.Managed(Point).init(allocator);
-    defer list.deinit();
+    //var list = std.array_list.Managed(Point).init(allocator);
+    //defer list.deinit();
+    var list: std.ArrayList(Point) = .empty;
+    defer list.deinit(allocator);
 
     for (0..matrix.rows) |i| {
         for (0..matrix.cols) |j| {
             if (check(matrix.data, j, i, matrix.rows, matrix.cols)) {
                 result1 += 1;
-                try list.append(.{ .x = j, .y = i });
+                const point = Point{ .x = j, .y = i };
+                try list.append(allocator, point);
             }
         }
     }
@@ -127,7 +130,8 @@ pub fn main() !void {
             for (0..matrix.cols) |j| {
                 if (check(matrix.data, j, i, matrix.rows, matrix.cols)) {
                     curr += 1;
-                    try list.append(.{ .x = j, .y = i });
+                    const point = Point{ .x = j, .y = i };
+                    try list.append(allocator, point);
                 }
             }
         }
