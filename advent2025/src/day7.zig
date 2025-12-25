@@ -167,7 +167,6 @@ pub fn main() !void {
 
         groups.clearRetainingCapacity();
         var iter1 = nextGroups.iterator();
-
         while (iter1.next()) |entry| {
             // std.debug.print("{s}: {}\n", .{entry.key_ptr.*, entry.value_ptr.*});
             try groups.put(entry.key_ptr.*, entry.value_ptr.*);
