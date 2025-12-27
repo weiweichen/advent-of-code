@@ -1,3 +1,10 @@
+// Got the idea from https://www.reddit.com/r/adventofcode/comments/1pk87hl/2025_day_10_part_2_bifurcate_your_way_to_victory/
+// Naive implementation with
+// zig build-exe day10.zig -O ReleaseFast
+// usr/bin/time ./day10 takes
+//        99.92 real         8.96 user        90.49 sys
+// on my MPB M2 Pro
+
 const std = @import("std");
 
 const Point = struct { x: i128, y: i128 };
