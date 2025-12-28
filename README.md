@@ -13,3 +13,6 @@ I should use Mojo to write real programs!
 
 2024 puzzels: [https://adventofcode.com/2024](https://adventofcode.com/2024)\
 Remembering how to write Scala again!
+
+2025 puzzels: [https://adventofcode.com/2025](https://adventofcode.com/2025)\
+Learning Zig! (a bit meh ...)
